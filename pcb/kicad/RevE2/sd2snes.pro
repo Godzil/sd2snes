@@ -1,4 +1,4 @@
-update=Wed 28 Dec 2011 06:55:00 PM CET
+update=jeu. 23 févr. 2012 17:42:34 CET
 version=1
 last_client=pcbnew
 [general]
@@ -38,7 +38,11 @@ offY_E=0
 RptD_X=0
 RptD_Y=100
 RptLab=1
+SimCmd=
+UseNetN=0
 LabSize=50
+PrintMonochrome=1
+ShowSheetReferenceAndTitleBlock=1
 [eeschema/libraries]
 LibName1=power
 LibName2=device
@@ -83,10 +87,11 @@ LibName40=libs/usb_minib
 LibName41=libs/mic23250
 [pcbnew]
 version=1
-PadDrlX=512
-PadDimH=512
-PadDimV=512
+PadDrlX=0
+PadDimH=2362
+PadDimV=1969
 BoardThickness=630
+SgPcb45=1
 TxtPcbV=800
 TxtPcbH=600
 TxtModV=600
@@ -96,7 +101,7 @@ VEgarde=40
 DrawLar=70
 EdgeLar=40
 TxtLar=120
-MSegLar=79
+MSegLar=140
 LastNetListRead=sd2snes.net
 [pcbnew/libraries]
 LibDir=../../kicad
@@ -114,3 +119,4 @@ LibName11=libs/mypackages
 LibName12=libs/snescart
 LibName13=libs/sdcard
 LibName14=libs/snail
+LibName15=J101
