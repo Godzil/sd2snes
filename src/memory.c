@@ -470,6 +470,11 @@ void sram_memset(uint32_t base_addr, uint32_t len, uint8_t val) {
   FPGA_DESELECT();
 }
 
+uint8_t sram_memtest(void)
+{
+   
+}
+
 uint64_t sram_gettime(uint32_t base_addr) {
   set_mcu_addr(base_addr);
   FPGA_SELECT();

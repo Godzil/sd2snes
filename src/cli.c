@@ -58,8 +58,8 @@ static char *curchar;
 
 /* Word lists */
 static char command_words[] =
-  "cd\0reset\0sreset\0dir\0ls\0test\0resume\0loadrom\0loadraw\0saveraw\0put\0rm\0d4\0vmode\0mapper\0settime\0time\0setfeature\0hexdump\0w8\0w16\0";
-enum { CMD_CD = 0, CMD_RESET, CMD_SRESET, CMD_DIR, CMD_LS, CMD_TEST, CMD_RESUME, CMD_LOADROM, CMD_LOADRAW, CMD_SAVERAW, CMD_PUT, CMD_RM, CMD_D4, CMD_VMODE, CMD_MAPPER, CMD_SETTIME, CMD_TIME, CMD_SETFEATURE, CMD_HEXDUMP, CMD_W8, CMD_W16 };
+  "cd\0reset\0sreset\0dir\0ls\0test\0resume\0loadrom\0loadraw\0saveraw\0put\0rm\0d4\0vmode\0mapper\0settime\0time\0setfeature\0hexdump\0w8\0w16\0stramtest\0";
+enum { CMD_CD = 0, CMD_RESET, CMD_SRESET, CMD_DIR, CMD_LS, CMD_TEST, CMD_RESUME, CMD_LOADROM, CMD_LOADRAW, CMD_SAVERAW, CMD_PUT, CMD_RM, CMD_D4, CMD_VMODE, CMD_MAPPER, CMD_SETTIME, CMD_TIME, CMD_SETFEATURE, CMD_HEXDUMP, CMD_W8, CMD_W16, CMD_SRAMTEST };
 
 /* ------------------------------------------------------------------------- */
 /*   Parse functions                                                         */
@@ -416,6 +416,10 @@ void cmd_w16(void) {
   sram_writeshort(val, offset);
 }
 
+void cmd_sramtest(void) {
+   sram_memtest();
+}
+
 /* ------------------------------------------------------------------------- */
 /*   CLI interface functions                                                 */
 /* ------------------------------------------------------------------------- */
@@ -424,7 +428,7 @@ void cli_init(void) {
 }
 
 void cli_entrycheck() {
-  if(uart_gotc() && uart_getc() == 27) {
+  if(uart_gotc() && ((uart_getc() == 27) || (uart_getc() == 13))) {
     printf("*** BREAK\n");
     cli_loop();
   }
@@ -561,7 +565,10 @@ void cli_loop(void) {
     case CMD_W16:
       cmd_w16();
       break;
+    
+    case CMD_SRAMTEST:
+      cmd_sramtest();
+      break;
     }
-
   }
 }

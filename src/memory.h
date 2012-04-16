@@ -71,4 +71,6 @@ uint8_t sram_reliable(void);
 void sram_memset(uint32_t base_addr, uint32_t len, uint8_t val);
 uint64_t sram_gettime(uint32_t base_addr);
 
+uint8_t sram_memtest(void);
+
 #endif
