@@ -125,7 +125,6 @@ REMOVE = rm -f
 COPY = cp
 AWK = awk
 
-
 #---------------- Compiler Options ----------------
 #  -g*:          generate debugging information
 #  -O*:          optimization level
@@ -138,7 +137,8 @@ CFLAGS += $(CDEFS) $(CINCS)
 CFLAGS += -O$(OPT)
 CFLAGS += $(CPUFLAGS) -nostartfiles
 #CFLAGS += -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums
-CFLAGS += -Wall -Wstrict-prototypes -Werror
+CFLAGS += -Wall -Wstrict-prototypes
+#-Werror
 CFLAGS += -Wa,-adhlns=$(OBJDIR)/$(<:.c=.lst)
 CFLAGS += -I$(OBJDIR)
 CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS))
