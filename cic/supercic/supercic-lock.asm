@@ -192,11 +192,11 @@ rst_loop
 	clrf	0x59		; clear D4
 	clrf	0x5e		;
 	clrf	0x5f		;
-        banksel EEADR		; fetch current mode from EEPROM
-        clrf    EEADR		; address 0
-        bsf     EECON1, RD	; 
-        movf    EEDAT, w        ; 
-        banksel PORTA
+	banksel EEADR		; fetch current mode from EEPROM
+	clrf    EEADR		; address 0
+	bsf     EECON1, RD	; 
+	movf    EEDAT, w        ; 
+	banksel PORTA
 	movwf	0x55		; store saved mode in mode var
 	movwf	0x56		; and temp LED
 	movwf	0x58		; and forced region

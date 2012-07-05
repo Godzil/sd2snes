@@ -744,4 +744,4 @@ supercic_pairmode_loop
 ; eeprom memory
 DEEPROM	CODE
 	de      0x09	; D411 (NTSC)
-end
+	end

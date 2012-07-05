@@ -182,7 +182,7 @@ uint32_t load_rom(uint8_t* filename, uint32_t base_addr, uint8_t flags) {
   UINT count=0;
   tick_t ticksstart, ticks_total=0;
   ticksstart=getticks();
-  printf("%s\n", filename);
+  printf("Loading: %s\n", filename);
   file_open(filename, FA_READ);
   if(file_res) {
     uart_putc('?');
@@ -470,9 +470,97 @@ void sram_memset(uint32_t base_addr, uint32_t len, uint8_t val) {
   FPGA_DESELECT();
 }
 
+/* memtest functions */
+uint8_t memtest_checkvalue(uint8_t value)
+{
+   uint8_t ret = 0;
+   uint32_t idx, lasterr = 0, errwas = 0, errcount = 0;
+   uint8_t data;
+   set_saveram_mask(0x0);
+   set_rom_mask(0x0);
+   printf("%s: Set memory to 0x%02X...\n", __func__, value);
+   sram_memset(0x00000, 0x1000000, value);
+   printf("Checking... [");
+   
+   set_mcu_addr(0x0);
+   
+   FPGA_SELECT();
+   FPGA_WAIT_RDY();
+   FPGA_TX_BYTE(0x88);
+   for(idx = 0; idx < 0x1000000; idx++)
+   {
+      FPGA_WAIT_RDY();
+      data = FPGA_RX_BYTE();
+      if ((idx % 0x100000) == 0)
+         uart_putc('.');
+
+      if ((idx % 0x10000) == 0)
+         toggle_read_led();
+
+      if (data != value)
+      {
+         //printf("%06x [%02x],", idx, data);
+         lasterr = idx;
+         errwas = data;
+         errcount++;
+         writeled(1);
+         ret = 0xFF;
+      }
+   }
+   printf("]\n");
+   if (errcount > 0)
+      printf("Found %d error(s) - last @ %x [%02x]\n", errcount, lasterr, errwas);
+
+   FPGA_DESELECT(); 
+   return ret;
+}
+
+uint8_t fpga_check(uint8_t value)
+{
+   uint8_t ret = 0, read;
+   FPGA_SELECT();
+   FPGA_WAIT_RDY();
+   FPGA_TX_BYTE(0xFF);
+   FPGA_TX_BYTE(value);
+   FPGA_TX_BYTE(value);
+   read = FPGA_RX_BYTE();
+   if (read != value)
+   {
+      printf("%02x != %02x!!\n", value, read);
+      ret = 0xFF;
+   }
+   FPGA_DESELECT();
+   return ret;
+}
+
 uint8_t sram_memtest(void)
 {
+   uint32_t ret;
+   printf("%s: Start memory test...\n", __func__);
+   writeled(0);
+   printf("Check FPGA Communication..\n");
+   printf("fpga_test   =   %02X\n", fpga_test());
+      
+   printf("fpga_status = %04X\n", fpga_status());
    
+   ret  = fpga_check(0x00);
+   ret |= fpga_check(0xFF);
+   ret |= fpga_check(0xAA);
+   ret |= fpga_check(0x55);
+   if (ret != 0x00)
+   {
+      printf("Error communicating with FPGA...\n");
+      //return ret;
+   }
+    
+   
+    
+   ret  = memtest_checkvalue(0x00);
+   ret |= memtest_checkvalue(0xFF);
+   ret |= memtest_checkvalue(0xAA);
+   ret |= memtest_checkvalue(0x55);
+
+   return ret;
 }
 
 uint64_t sram_gettime(uint32_t base_addr) {

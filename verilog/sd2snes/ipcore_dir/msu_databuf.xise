@@ -12,7 +12,7 @@
     <!-- Copyright (c) 1995-2011 Xilinx, Inc.  All rights reserved. -->
   </header>
 
-  <version xil_pn:ise_version="13.2" xil_pn:schema_version="2"/>
+  <version xil_pn:ise_version="13.4" xil_pn:schema_version="2"/>
 
   <files>
     <file xil_pn:name="msu_databuf.ngc" xil_pn:type="FILE_NGC">
@@ -26,13 +26,7 @@
       <association xil_pn:name="PostRouteSimulation" xil_pn:seqID="5"/>
       <association xil_pn:name="PostTranslateSimulation" xil_pn:seqID="5"/>
     </file>
-    <file xil_pn:name="msu_databuf.vhd" xil_pn:type="FILE_VHDL">
-      <association xil_pn:name="BehavioralSimulation" xil_pn:seqID="7"/>
-      <association xil_pn:name="Implementation" xil_pn:seqID="7"/>
-      <association xil_pn:name="PostMapSimulation" xil_pn:seqID="7"/>
-      <association xil_pn:name="PostRouteSimulation" xil_pn:seqID="7"/>
-      <association xil_pn:name="PostTranslateSimulation" xil_pn:seqID="7"/>
-    </file>
+    <file xil_pn:name="msu_databuf.vhd" xil_pn:type="FILE_VHDL"/>
   </files>
 
   <properties>

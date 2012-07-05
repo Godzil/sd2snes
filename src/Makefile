@@ -117,6 +117,7 @@ endif
 # CC must be defined here to generate the correct CFLAGS
 SHELL = sh
 CC = $(ARCH)-gcc
+#CC = clang
 OBJCOPY = $(ARCH)-objcopy
 OBJDUMP = $(ARCH)-objdump
 SIZE = $(ARCH)-size
@@ -140,6 +141,7 @@ CFLAGS += $(CPUFLAGS) -nostartfiles
 CFLAGS += -Wall -Wstrict-prototypes
 #-Werror
 CFLAGS += -Wa,-adhlns=$(OBJDIR)/$(<:.c=.lst)
+#CFLAGS += -I/opt/arm-none-eabi-4.6.2/arm-none-eabi/include/
 CFLAGS += -I$(OBJDIR)
 CFLAGS += $(patsubst %,-I%,$(EXTRAINCDIRS))
 CFLAGS += $(CSTANDARD)

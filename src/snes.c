@@ -165,6 +165,7 @@ void get_selected_name(uint8_t* fn) {
 }
 
 void snes_bootprint(void* msg) {
+  printf("snes_boot: %s\n",msg);
   sram_writeblock(msg, SRAM_CMD_ADDR, 33);
 }
 

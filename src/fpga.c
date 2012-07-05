@@ -119,17 +119,17 @@ if(BITBAND(PROGBREG->FIOPIN, PROGBBIT)) {
       led_panic();
     }
     LPC_GPIO2->FIOMASK1 = ~(BV(0));
-    uart_putc('p');
+    //uart_putc('p');
 
 
     /* open configware file */
     file_open(filename, FA_READ);
     if(file_res) {
-      uart_putc('?');
-      uart_putc(0x30+file_res);
+      //uart_putc('?');
+      //uart_putc(0x30+file_res);
       return;
     }
-    uart_putc('C');
+    //uart_putc('C');
 
     for (;;) {
       data = rle_file_getc();
@@ -137,16 +137,16 @@ if(BITBAND(PROGBREG->FIOPIN, PROGBBIT)) {
       if (file_status || file_res) break;   /* error or eof */
       FPGA_SEND_BYTE_SERIAL(data);
     }
-    uart_putc('c');
+    //uart_putc('c');
     file_close();
-    printf("fpga_pgm: %d bytes programmed\n", i);
+    printf("%s: %d bytes programmed\n", __func__, i);
     delay_ms(1);
   } while (!fpga_get_done() && retries--);
   if(!fpga_get_done()) {
     printf("FPGA failed to configure after %d tries.\n", MAXRETRIES);
     led_panic();
   }
-  printf("FPGA configured\n");
+  printf("%s: FPGA configured\n", __func__);
   fpga_postinit();
 }
 
@@ -160,7 +160,7 @@ void fpga_rompgm() {
     i=0;
     timeout = getticks() + 100;
     fpga_set_prog_b(0);
-    uart_putc('P');
+    //uart_putc('P');
     fpga_set_prog_b(1);
     while(!fpga_get_initb()){
       if(getticks() > timeout) {
@@ -173,26 +173,26 @@ void fpga_rompgm() {
       led_panic();
     }
     LPC_GPIO2->FIOMASK1 = ~(BV(0));
-    uart_putc('p');
+    //uart_putc('p');
 
     /* open configware file */
     rle_mem_init(cfgware, sizeof(cfgware));
-    printf("sizeof(cfgware) = %d\n", sizeof(cfgware));
+    //printf("sizeof(cfgware) = %d\n", sizeof(cfgware));
     for (;;) {
       data = rle_mem_getc();
       if(rle_state) break;
       i++;
       FPGA_SEND_BYTE_SERIAL(data);
     }
-    uart_putc('c');
-    printf("fpga_pgm: %d bytes programmed\n", i);
+    //uart_putc('c');
+    printf("%s: %d bytes programmed\n", __func__, i);
     delay_ms(1);
   } while (!fpga_get_done() && retries--);
   if(!fpga_get_done()) {
     printf("FPGA failed to configure after %d tries.\n", MAXRETRIES);
     led_panic();
   }
-  printf("FPGA configured\n");
+  printf("%s: FPGA configured\n", __func__);
   fpga_postinit();
 }
 
