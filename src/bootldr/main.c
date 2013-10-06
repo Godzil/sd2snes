@@ -52,8 +52,12 @@ int main(void) {
   clock_init();
 //  LPC_PINCON->PINSEL0 |= BV(20) | BV(21);                  /* MAT3.0 (FPGA clock) */
   sdn_init();
+
+  for(i = 0; i < 20; i++) uart_putc('-');
+  uart_putc('\n');
+
   DBG_BL printf("chksum=%08lx\n", *(uint32_t*)28);
-  DBG_BL printf("\n\nsd2snes mk.2 bootloader\nver.: " VER "\ncpu clock: %ld Hz\n", CONFIG_CPU_FREQUENCY);
+  /*DBG_BL*/ printf("\n\nsd2snes mk.2 bootloader\nver.: " VER "\ncpu clock: %ld Hz\n", CONFIG_CPU_FREQUENCY);
 DBG_BL printf("PCONP=%lx\n", LPC_SC->PCONP);
 /* setup timer (fpga clk) */
   LPC_TIM3->CTCR=0;

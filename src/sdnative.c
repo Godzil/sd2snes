@@ -933,7 +933,7 @@ DSTATUS sdn_initialize(BYTE drv) {
 
   if((rsplen=cmd_slow(SEND_IF_COND, 0x000001aa, 0x87, NULL, rsp))) {
     DBG_SD printf("CMD8 response:\n");
-    DBG_SD uart_trace(rsp, 0, rsplen);
+    DBG_SD uart_trace(rsp, 0, rsplen, 0);
     hcs=1;
   }
   while(1) {

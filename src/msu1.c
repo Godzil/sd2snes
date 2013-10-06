@@ -161,7 +161,6 @@ int msu1_check(uint8_t* filename) {
 
 int msu1_loop() {
 /* it is assumed that the MSU file is already opened by calling msu1_check(). */
-  set_dac_vol(0x00);
   while(fpga_status() & 0x4000);
   uint16_t dac_addr = 0;
   uint16_t msu_addr = 0;
@@ -204,21 +203,18 @@ int msu1_loop() {
     /* Data buffer refill */
     if((fpga_status_now & 0x2000) != (fpga_status_prev & 0x2000)) {
       DBG_MSU1 printf("data\n");
-      uint8_t pageno = 0;
       if(fpga_status_now & 0x2000) {
         msu_addr = 0x0;
         msu_page1_start = msu_page2_start + msu_page_size;
-        pageno = 1;
       } else {
         msu_addr = 0x2000;
         msu_page2_start = msu_page1_start + msu_page_size;
-        pageno = 2;
       }
       set_msu_addr(msu_addr);
       sd_offload_tgt=2;
       ff_sd_offload=1;
       msu_res = f_read(&msufile, file_buf, 8192, &msu_data_bytes_read);
-      DBG_MSU1 printf("data buffer refilled. res=%d page1=%08lx page2=%08lx\n", msu_res, msu_page1_start, msu_page2_start);
+      DBG_MSU1 printf("data buffer refilled. page=%d res=%d page1=%08lx page2=%08lx\n", pageno, msu_res, msu_page1_start, msu_page2_start);
     }
 
     /* Audio buffer refill */

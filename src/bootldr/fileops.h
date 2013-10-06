@@ -31,7 +31,8 @@
 
 enum filestates { FILE_OK=0, FILE_ERR, FILE_EOF };
 
-BYTE file_buf[512];
+#define GCC_ALIGN_WORKAROUND __attribute__ ((aligned(4)))
+BYTE file_buf[512] GCC_ALIGN_WORKAROUND;
 FATFS fatfs;
 FIL file_handle;
 FRESULT file_res;

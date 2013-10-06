@@ -48,12 +48,14 @@ extern volatile int reset_changed;
 
 extern volatile cfg_t CFG;
 
-enum system_states {
+enum system_states
+{
   SYS_RTC_STATUS = 0,
   SYS_LAST_STATUS = 1
 };
 
-int main(void) {
+int main(void)
+{
   LPC_GPIO2->FIODIR = BV(4) | BV(5);
   LPC_GPIO1->FIODIR = BV(23) | BV(SNES_CIC_PAIR_BIT);
   BITBAND(SNES_CIC_PAIR_REG->FIOSET, SNES_CIC_PAIR_BIT) = 1;
@@ -88,7 +90,9 @@ printf("PCONP=%lx\n", LPC_SC->PCONP);
   file_init();
   cic_init(0);
 /* setup timer (fpga clk) */
+  LPC_TIM3->TCR=2;
   LPC_TIM3->CTCR=0;
+  LPC_TIM3->PR=0;
   LPC_TIM3->EMR=EMC0TOGGLE;
   LPC_TIM3->MCR=MR0R;
   LPC_TIM3->MR0=1;
@@ -119,17 +123,21 @@ printf("PCONP=%lx\n", LPC_SC->PCONP);
     /* some sanity checks */
     uint8_t card_go = 0;
     while(!card_go) {
-      if(disk_status(0) & (STA_NOINIT|STA_NODISK)) {
-	snes_bootprint("        No SD Card found!       \0");
-	while(disk_status(0) & (STA_NOINIT|STA_NODISK));
-	delay_ms(200);
+      if(disk_status(0) & (STA_NOINIT|STA_NODISK))
+      {
+        snes_bootprint("        No SD Card found!       \0");
+        while(disk_status(0) & (STA_NOINIT|STA_NODISK));
+          delay_ms(200);
       }
       file_open((uint8_t*)"/sd2snes/menu.bin", FA_READ);
-      if(file_status != FILE_OK) {
-	snes_bootprint("  /sd2snes/menu.bin not found!  \0");
-	while(disk_status(0) == RES_OK);
-      } else {
-	card_go = 1;
+      if(file_status != FILE_OK)
+      {
+        snes_bootprint("  /sd2snes/menu.bin not found!  \0");
+        while(disk_status(0) == RES_OK);
+      } 
+      else
+      {
+        card_go = 1;
       }
       file_close();
     }
@@ -254,6 +262,7 @@ printf("PCONP=%lx\n", LPC_SC->PCONP);
           cfg_set_last_game_valid(1);
           cfg_save();
 	  filesize = load_rom(file_lfn, SRAM_ROM_ADDR, LOADROM_WITH_SRAM | LOADROM_WITH_RESET);
+	  printf("Filesize = %lu\n", filesize);
 	  break;
 	case SNES_CMD_SETRTC:
           /* get time from RAM */
@@ -292,9 +301,11 @@ printf("PCONP=%lx\n", LPC_SC->PCONP);
 	  break;
       }
     }
+    printf("loaded %lu bytes\n", filesize);
     printf("cmd was %x, going to snes main loop\n", cmd);
 
-    if(romprops.has_msu1 && msu1_loop()) {
+    if(romprops.has_msu1) {
+      while(!msu1_loop());
       prepare_reset();
       continue;
     }
@@ -302,30 +313,38 @@ printf("PCONP=%lx\n", LPC_SC->PCONP);
     cmd=0;
     uint8_t snes_reset_prev=0, snes_reset_now=0, snes_reset_state=0;
     uint16_t reset_count=0;
-    while(fpga_test() == FPGA_TEST_TOKEN) {
+    while(fpga_test() == FPGA_TEST_TOKEN)
+    {
       cli_entrycheck();
       sleep_ms(250);
       sram_reliable();
       printf("%s ", get_cic_statename(get_cic_state()));
-      if(reset_changed) {
+      if(reset_changed)
+      {
         printf("reset\n");
         reset_changed = 0;
         fpga_reset_srtc_state();
       }
-      snes_reset_now=get_snes_reset();
-      if(snes_reset_now) {
-	if(!snes_reset_prev) {
-	  printf("RESET BUTTON DOWN\n");
-	  snes_reset_state=1;
-	  reset_count=0;
-	}
-      } else {
-	if(snes_reset_prev) {
-	  printf("RESET BUTTON UP\n");
-	  snes_reset_state=0;
-	}
+      snes_reset_now = get_snes_reset();
+      if (snes_reset_now)
+      {
+        if (!snes_reset_prev)
+        {
+          printf("RESET BUTTON DOWN\n");
+          snes_reset_state = 1;
+          reset_count = 0;
+        }
+      } 
+      else
+      {
+        if (snes_reset_prev)
+        {
+          printf("RESET BUTTON UP\n");
+          snes_reset_state = 0;
+        }
       }
-      if(snes_reset_state) {
+      if (snes_reset_state)
+      {
 	reset_count++;
       } else {
 	sram_reliable();

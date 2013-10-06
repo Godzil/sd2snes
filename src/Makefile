@@ -75,7 +75,7 @@ ASRC = startup.S crc.S
 #     (Note: 3 is not always the best optimization level. See avr-libc FAQ.)
 # Use s -mcall-prologues when you really need size...
 #OPT = 2
-OPT = 2
+OPT = s
 
 # Debugging format.
 DEBUG = dwarf-2
@@ -198,7 +198,7 @@ ALL_ASFLAGS = -I. -x assembler-with-cpp $(ASFLAGS) $(CDEFS)
 # Default target.
 all: build
 
-build: elf bin hex
+build: elf bin hex cfgware.h
 	$(E) "  SIZE   $(TARGET).elf"
 	$(Q)$(ELFSIZE)|grep -v debug
 	cp $(TARGET).bin $(OBJDIR)/firmware.img

@@ -54,11 +54,12 @@ void sram_hexdump(uint32_t addr, uint32_t len) {
   uint32_t ptr;
   for(ptr=0; ptr < len; ptr += 16) {
     sram_readblock((void*)buf, ptr+addr, 16);
-    uart_trace(buf, 0, 16);
+    uart_trace(buf, 0, 16, addr);
   }
 }
 
 void sram_writebyte(uint8_t val, uint32_t addr) {
+  printf("WriteB %8Xh @%08lXh\n", val, addr);
   set_mcu_addr(addr);
   FPGA_SELECT();
   FPGA_TX_BYTE(0x98); /* WRITE */
@@ -74,10 +75,12 @@ uint8_t sram_readbyte(uint32_t addr) {
   FPGA_WAIT_RDY();
   uint8_t val = FPGA_RX_BYTE();
   FPGA_DESELECT();
+  //printf(" ReadB %8Xh @%08lXh\n", val, addr);
   return val;
 }
 
 void sram_writeshort(uint16_t val, uint32_t addr) {
+  printf("WriteS %8Xh @%08lXh\n", val, addr);
   set_mcu_addr(addr);
   FPGA_SELECT();
   FPGA_TX_BYTE(0x98); /* WRITE */
@@ -89,6 +92,7 @@ void sram_writeshort(uint16_t val, uint32_t addr) {
 }
 
 void sram_writelong(uint32_t val, uint32_t addr) {
+  printf("WriteL %8lXh @%08lXh\n", val, addr);
   set_mcu_addr(addr);
   FPGA_SELECT();
   FPGA_TX_BYTE(0x98); /* WRITE */
@@ -112,6 +116,7 @@ uint16_t sram_readshort(uint32_t addr) {
   FPGA_WAIT_RDY();
   val |= ((uint32_t)FPGA_RX_BYTE()<<8);
   FPGA_DESELECT();
+  //printf(" ReadS %8lXh @%08lXh\n", val, addr);
   return val;
 }
 
@@ -128,6 +133,7 @@ uint32_t sram_readlong(uint32_t addr) {
   FPGA_WAIT_RDY();
   val |= ((uint32_t)FPGA_RX_BYTE()<<24);
   FPGA_DESELECT();
+  //printf(" ReadL %8lXh @%08lXh\n", val, addr);
   return val;
 }
 
@@ -163,7 +169,21 @@ void sram_readblock(void* buf, uint32_t addr, uint16_t size) {
   FPGA_DESELECT();
 }
 
+void sram_readstrn(void* buf, uint32_t addr, uint16_t size) {
+  uint16_t count=size;
+  uint8_t* tgt = buf;
+  set_mcu_addr(addr);
+  FPGA_SELECT();
+  FPGA_TX_BYTE(0x88);	/* READ */
+  while(count--) {
+    FPGA_WAIT_RDY();
+    if(!(*(tgt++) = FPGA_RX_BYTE())) break;
+  }
+  FPGA_DESELECT();
+}
+
 void sram_writeblock(void* buf, uint32_t addr, uint16_t size) {
+  printf("WriteZ %08lX -> %08lX [%d]\n", addr, addr+size, size);
   uint16_t count=size;
   uint8_t* src = buf;
   set_mcu_addr(addr);
@@ -178,7 +198,7 @@ void sram_writeblock(void* buf, uint32_t addr, uint16_t size) {
 
 uint32_t load_rom(uint8_t* filename, uint32_t base_addr, uint8_t flags) {
   UINT bytes_read;
-  DWORD filesize;
+  DWORD filesize, read_size = 0;
   UINT count=0;
   tick_t ticksstart, ticks_total=0;
   ticksstart=getticks();
@@ -206,12 +226,14 @@ uint32_t load_rom(uint8_t* filename, uint32_t base_addr, uint8_t flags) {
     ff_sd_offload=1;
     sd_offload_tgt=0;
     bytes_read = file_read();
+    read_size += bytes_read;
     if (file_res || !bytes_read) break;
     if(!(count++ % 512)) {
-      uart_putc('.');
+      uart_putc('.'); 
     }
   }
   file_close();
+  printf("Read %ld [%08lX] bytes...\n", read_size, read_size);
   set_mapper(romprops.mapper_id);
   printf("rom header map: %02x; mapper id: %d\n", romprops.header.map, romprops.mapper_id);
   ticks_total=getticks()-ticksstart;
@@ -261,6 +283,9 @@ uint32_t load_rom(uint8_t* filename, uint32_t base_addr, uint8_t flags) {
     rammask = romprops.ramsize_bytes - 1;
   }
   rommask = romprops.romsize_bytes - 1;
+  if (rommask >= SRAM_SAVE_ADDR)
+    rommask = SRAM_SAVE_ADDR - 1;
+  
   printf("ramsize=%x rammask=%lx\nromsize=%x rommask=%lx\n", romprops.header.ramsize, rammask, romprops.header.romsize, rommask);
   set_saveram_mask(rammask);
   set_rom_mask(rommask);
@@ -460,7 +485,7 @@ uint32_t load_bootrle(uint32_t base_addr) {
 
 void save_sram(uint8_t* filename, uint32_t sram_size, uint32_t base_addr) {
   uint32_t count = 0;
-  uint32_t num = 0;
+  //uint32_t num = 0;
 
   FPGA_DESELECT();
   file_open(filename, FA_CREATE_ALWAYS | FA_WRITE);
@@ -477,7 +502,7 @@ void save_sram(uint8_t* filename, uint32_t sram_size, uint32_t base_addr) {
       count++;
     }
     FPGA_DESELECT();
-    num = file_write();
+    /*num = */file_write();
     if(file_res) {
       uart_putc(0x30+file_res);
     }
@@ -524,9 +549,9 @@ uint8_t sram_reliable() {
     val=sram_readlong(SRAM_SCRATCHPAD);
     if(val==0x12345678) {
       score++;
-    } else {
-      printf("i=%d val=%08lX\n", i, val);
-    }
+    } //else {
+      //printf("i=%d val=%08lX\n", i, val);
+    //}
   }
   if(score<SRAM_RELIABILITY_SCORE) {
     result = 0;
@@ -581,7 +606,7 @@ uint64_t sram_gettime(uint32_t base_addr) {
 
 void load_dspx(const uint8_t *filename, uint8_t coretype) {
   UINT bytes_read;
-  DWORD filesize;
+  //DWORD filesize;
   uint16_t word_cnt;
   uint8_t wordsize_cnt = 0;
   uint16_t sector_remaining = 0;
@@ -605,7 +630,7 @@ void load_dspx(const uint8_t *filename, uint8_t coretype) {
   }
 
   file_open((uint8_t*)filename, FA_READ);
-  filesize = file_handle.fsize;
+  /*filesize = file_handle.fsize;*/
   if(file_res) {
     printf("Could not read %s: error %d\n", filename, file_res);
     return;

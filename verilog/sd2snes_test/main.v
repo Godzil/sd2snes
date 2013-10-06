@@ -29,12 +29,12 @@ module main(
   input SNES_CS,
   inout [7:0] SNES_DATA,
   input SNES_CPU_CLK,
-  input SNES_REFRESH,
   output SNES_IRQ,
   output SNES_DATABUS_OE,
   output SNES_DATABUS_DIR,
-  input SNES_SYSCLK,
 
+  input SNES_SYSCLK,  
+  input SNES_REFRESH,
   input [7:0] SNES_PA,
   input SNES_PARD,
   input SNES_PAWR,
@@ -386,8 +386,8 @@ end
 
 wire ASSERT_SNES_ADDR = SNES_CPU_CLK & NEED_SNES_ADDRr;
 
-assign ROM_ADDR  = (SD_DMA_TO_ROM) ? MCU_ADDR[23:1] : (ASSERT_SNES_ADDR) ? ram0_addr[23:1] : ROM_ADDRr[23:1];
-assign ROM_ADDR0 = (SD_DMA_TO_ROM) ? MCU_ADDR[0] : (ASSERT_SNES_ADDR) ? ram0_addr[0] : ROM_ADDRr[0];
+assign ROM_ADDR  = (SD_DMA_TO_ROM) ? MCU_ADDR[22:0] : (ASSERT_SNES_ADDR) ? ram0_addr[22:0] : ROM_ADDRr[22:0];
+assign ROM_ADDR0 = 1'b0; //(SD_DMA_TO_ROM) ? MCU_ADDR[0] : (ASSERT_SNES_ADDR) ? ram0_addr[0] : ROM_ADDRr[0];
 
 assign RAM_ADDR = ASSERT_SNES_ADDR ? ram1_addr : RAM_ADDRr;
 
@@ -441,8 +441,8 @@ always @(posedge CLK2) begin
         if(ST_MEM_DELAYr == 4'h0) STATE <= ST_SNES_RD_END;
         else STATE <= ST_SNES_RD_WAIT;
         if(ram0_enable) begin
-          if(ROM_ADDR0) SNES_DINr <= ROM_DATA[7:0];
-          else SNES_DINr <= ROM_DATA[15:8];
+          if(ROM_ADDR0) SNES_DINr <= ROM_DATA[7:0] | ROM_DATA[15:8];
+          else SNES_DINr <= ROM_DATA[15:8] | ROM_DATA[7:0];
         end else if(ram1_enable) begin
           SNES_DINr <= RAM_DATA[7:0];
         end
@@ -450,8 +450,8 @@ always @(posedge CLK2) begin
       ST_SNES_RD_END: begin
         STATE <= ST_IDLE;
         if(ram0_enable) begin
-          if(ROM_ADDR0) SNES_DINr <= ROM_DATA[7:0];
-          else SNES_DINr <= ROM_DATA[15:8];
+          if(ROM_ADDR0) SNES_DINr <= ROM_DATA[7:0] | ROM_DATA[15:8];
+          else SNES_DINr <= ROM_DATA[15:8] | ROM_DATA[7:0];
         end else if(ram1_enable) begin
           SNES_DINr <= RAM_DATA[7:0];
         end
@@ -498,8 +498,8 @@ always @(posedge CLK2) begin
         end
         else STATE <= ST_MCU_RD_WAIT;
         if(MCU_RAMSEL == 1'b0) begin
-          if(ROM_ADDR0) MCU_DINr <= ROM_DATA[7:0];
-          else MCU_DINr <= ROM_DATA[15:8];
+          if(ROM_ADDR0) MCU_DINr <= ROM_DATA[7:0] | ROM_DATA[15:8];
+          else MCU_DINr <= ROM_DATA[15:8] | ROM_DATA[7:0];
         end else MCU_DINr <= RAM_DATA;
       end
       ST_MCU_RD_WAIT2: begin
@@ -548,14 +548,11 @@ always @(posedge CLK2) begin
   end
 end
 
-assign ROM_DATA[7:0] = ROM_ADDR0
-                       ?(SD_DMA_TO_ROM ? (!MCU_WRITE ? MCU_DOUT : 8'bZ)
+assign ROM_DATA[7:0] = (SD_DMA_TO_ROM ? (!MCU_WRITE ? MCU_DOUT : 8'bZ)
                                         : (!ROM_WE ? ROM_DOUTr : 8'bZ)
-                        )
-                       :8'bZ;
+                        );
 
-assign ROM_DATA[15:8] = ROM_ADDR0 ? 8'bZ
-                        :(SD_DMA_TO_ROM ? (!MCU_WRITE ? MCU_DOUT : 8'bZ)
+assign ROM_DATA[15:8] = (SD_DMA_TO_ROM ? (!MCU_WRITE ? MCU_DOUT : 8'bZ)
                                          : (!ROM_WE ? ROM_DOUTr : 8'bZ)
                          );
 
@@ -575,7 +572,7 @@ assign ROM_OE = 1'b0;
 assign ROM_CE = 1'b0;
 
 assign ROM_BHE = !ROM_WE ? ROM_ADDR0 : 1'b0;
-assign ROM_BLE = !ROM_WE ? !ROM_ADDR0 : 1'b0;
+assign ROM_BLE = !ROM_WE ? ROM_ADDR0 : 1'b0;
 
 assign SNES_DATABUS_OE = PA_enable ? 1'b0
                          : bram_enable ? 1'b0

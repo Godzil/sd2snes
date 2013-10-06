@@ -101,7 +101,6 @@ wire [23:0] SAVERAM_MASK;
 wire [23:0] ROM_MASK;
 
 wire [23:0] MAPPED_SNES_ADDR;
-wire ROM_ADDR0;
 
 spi snes_spi(
   .clk(CLK2),
@@ -253,8 +252,7 @@ initial ROM_SAr = 1'b1;
 //wire ROM_SA = SNES_FAKE_CLK | ((STATE == ST_IDLE) ^ (~RQ_MCU_RDYr & SNES_cycle_end));
 wire ROM_SA = ROM_SAr;
 
-assign ROM_ADDR  = (ROM_SA) ? MAPPED_SNES_ADDR[23:1] : ROM_ADDRr[23:1];
-assign ROM_ADDR0 = (ROM_SA) ? MAPPED_SNES_ADDR[0] : ROM_ADDRr[0];
+assign ROM_ADDR  = (ROM_SA) ? MAPPED_SNES_ADDR[22:0] : ROM_ADDRr[22:0];
 
 reg ROM_WEr;
 initial ROM_WEr = 1'b1;
@@ -308,7 +306,8 @@ always @(posedge CLK2) begin
 		end else if(SNES_cycle_start) begin
 //		  STATE <= ST_SNES_RD_ADDR;		  
         STATE <= ST_SNES_RD_END;
-        SNES_DOUTr <= (ROM_ADDR0 ? ROM_DATA[7:0] : ROM_DATA[15:8]);
+        SNES_DOUTr <= ROM_DATA[7:0] | ROM_DATA[15:8];
+		  //(ROM_ADDR0 ? ROM_DATA[7:0] : ROM_DATA[15:8]);
 		end else if(SNES_DEADr & MCU_RD_PENDr) begin
 		  STATE <= ST_MCU_RD_ADDR;
 		end else if(SNES_DEADr & MCU_WR_PENDr) begin
@@ -368,7 +367,8 @@ always @(posedge CLK2) begin
 		else STATE <= ST_MCU_RD_WAIT;
 	 end
 	 ST_MCU_RD_END: begin
-      MCU_DINr <= ROM_ADDRr[0] ? ROM_DATA[7:0] : ROM_DATA[15:8];
+      MCU_DINr <= ROM_DATA[7:0] | ROM_DATA[15:8];
+		//ROM_ADDRr[0] ? ROM_DATA[7:0] : ROM_DATA[15:8];
 	   STATE <= ST_IDLE;
 	 end
 	 
@@ -401,13 +401,9 @@ always @(posedge CLK2) begin
   ROM_WE_1 <= ROM_WE;
 end
 
-assign ROM_DATA[7:0] = ROM_ADDR0
-                       ?(ROM_DOUT_ENr ? ROM_DOUTr : 8'bZ)
-                       :8'bZ;
-
-assign ROM_DATA[15:8] = ROM_ADDR0 ? 8'bZ
-                        :(ROM_DOUT_ENr ? ROM_DOUTr : 8'bZ);
-
+assign ROM_DATA[7:0] = (ROM_DOUT_ENr ? ROM_DOUTr : 8'bZ);
+assign ROM_DATA[15:8] = (ROM_DOUT_ENr ? ROM_DOUTr : 8'bZ);
+								
 assign ROM_WE = ROM_WEr;
 
 // OE always active. Overridden by WE when needed.
@@ -415,8 +411,8 @@ assign ROM_OE = 1'b0;
 
 assign ROM_CE = 1'b0;
 
-assign ROM_BHE = /*(~SD_DMA_TO_ROM & ~ROM_WE & ~ROM_SA) ?*/ ROM_ADDR0 /*: 1'b0*/;
-assign ROM_BLE = /*(~SD_DMA_TO_ROM & ~ROM_WE & ~ROM_SA) ?*/ !ROM_ADDR0 /*: 1'b0*/;
+assign ROM_BHE = 1'b0;// /*(~SD_DMA_TO_ROM & ~ROM_WE & ~ROM_SA) ?*/ ROM_ADDR0 /*: 1'b0*/;
+assign ROM_BLE = 1'b0;// /*(~SD_DMA_TO_ROM & ~ROM_WE & ~ROM_SA) ?*/ !ROM_ADDR0 /*: 1'b0*/;
 
 assign SNES_DATABUS_OE = ((IS_ROM & SNES_CS)
                           |(!IS_ROM & !IS_SAVERAM)

@@ -58,8 +58,8 @@ static char *curchar;
 
 /* Word lists */
 static char command_words[] =
-  "cd\0reset\0sreset\0dir\0ls\0test\0resume\0loadrom\0loadraw\0saveraw\0put\0rm\0mkdir\0d4\0vmode\0mapper\0settime\0time\0setfeature\0hexdump\0w8\0w16\0";
-enum { CMD_CD = 0, CMD_RESET, CMD_SRESET, CMD_DIR, CMD_LS, CMD_TEST, CMD_RESUME, CMD_LOADROM, CMD_LOADRAW, CMD_SAVERAW, CMD_PUT, CMD_RM, CMD_MKDIR, CMD_D4, CMD_VMODE, CMD_MAPPER, CMD_SETTIME, CMD_TIME, CMD_SETFEATURE, CMD_HEXDUMP, CMD_W8, CMD_W16 };
+  "cd\0reset\0sreset\0dir\0ls\0test\0exit\0loadrom\0loadraw\0saveraw\0put\0rm\0mkdir\0d4\0vmode\0mapper\0settime\0time\0setfeature\0hexdump\0w8\0w16\0memset\0";
+enum { CMD_CD = 0, CMD_RESET, CMD_SRESET, CMD_DIR, CMD_LS, CMD_TEST, CMD_EXIT, CMD_LOADROM, CMD_LOADRAW, CMD_SAVERAW, CMD_PUT, CMD_RM, CMD_MKDIR, CMD_D4, CMD_VMODE, CMD_MAPPER, CMD_SETTIME, CMD_TIME, CMD_SETFEATURE, CMD_HEXDUMP, CMD_W8, CMD_W16, CMD_MEMSET };
 
 /* ------------------------------------------------------------------------- */
 /*   Parse functions                                                         */
@@ -104,11 +104,11 @@ static int32_t parse_unsigned(uint32_t lower, uint32_t upper, uint8_t base) {
 /* Parse the string starting with curchar for a word in wordlist */
 static int8_t parse_wordlist(char *wordlist) {
   uint8_t i, matched;
-  char *cur, *ptr;
-  char c;
+  unsigned char *cur, *ptr;
+  unsigned char c;
 
   i = 0;
-  ptr = wordlist;
+  ptr = (unsigned char *)wordlist;
 
   // Command list on "?"
   if (strlen(curchar) == 1 && *curchar == '?') {
@@ -128,7 +128,7 @@ static int8_t parse_wordlist(char *wordlist) {
   }
 
   while (1) {
-    cur = curchar;
+    cur = (unsigned char *)curchar;
     matched = 1;
     c = *ptr;
     do {
@@ -138,9 +138,9 @@ static int8_t parse_wordlist(char *wordlist) {
         return -1;
       }
 
-      if (tolower(c) != tolower(*cur)) {
+      if (tolower((int)c) != tolower((int)*cur)) {
         // Check for end-of-word
-        if (cur != curchar && (*cur == ' ' || *cur == 0)) {
+        if (cur != (unsigned char*)curchar && (*cur == ' ' || *cur == 0)) {
           // Partial match found, return that
           break;
         } else {
@@ -156,7 +156,7 @@ static int8_t parse_wordlist(char *wordlist) {
     if (matched) {
       char *tmp = curchar;
 
-      curchar = cur;
+      curchar = (char *)cur;
       // Return match only if whitespace or end-of-string follows
       // (avoids mismatching partial words)
       if (skip_spaces()) {
@@ -269,7 +269,7 @@ static void cmd_show_directory(void) {
       strlwr((char *)name);
     }
 
-    printf("%s",name);
+    printf("%s [%s] (%ld)",finfo.lfname, finfo.fname, finfo.fsize);
 
     /* Directory indicator (Unix-style) */
     if (finfo.fattrib & AM_DIR)
@@ -420,6 +420,13 @@ void cmd_w16(void) {
   sram_writeshort(val, offset);
 }
 
+void cmd_memset(void) {
+  uint32_t offset = parse_unsigned(0, 16777215, 16);
+  uint32_t len = parse_unsigned(0, 16777216, 16);
+  uint8_t val = parse_unsigned(0, 255, 16);
+  sram_memset(offset, len, val);
+}
+
 /* ------------------------------------------------------------------------- */
 /*   CLI interface functions                                                 */
 /* ------------------------------------------------------------------------- */
@@ -502,7 +509,7 @@ void cli_loop(void) {
       cmd_show_directory();
       break;
 
-    case CMD_RESUME:
+    case CMD_EXIT:
       return;
       break;
 
@@ -569,7 +576,11 @@ void cli_loop(void) {
     case CMD_W16:
       cmd_w16();
       break;
-    }
 
+    case CMD_MEMSET:
+      cmd_memset();
+      break;
+
+    }
   }
 }

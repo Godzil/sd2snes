@@ -440,6 +440,7 @@ address snes_addr(
   .bs_page_offset(bs_page_offset),
   .bs_page(bs_page),
   .bs_page_enable(bs_page_enable),
+  .bsx_tristate(bsx_tristate),
   //SRTC
   .srtc_enable(srtc_enable),
   //uPD77C25
@@ -472,10 +473,10 @@ parameter ST_MCU_WR_WAIT  = 18'b000100000000000000;
 parameter ST_MCU_WR_WAIT2 = 18'b001000000000000000;
 parameter ST_MCU_WR_END   = 18'b010000000000000000;
 
-parameter ROM_RD_WAIT = 4'h0;
+parameter ROM_RD_WAIT = 4'h1;
 parameter ROM_RD_WAIT_MCU = 4'h6;
 parameter ROM_WR_WAIT = 4'h4;
-parameter ROM_WR_WAIT1 = 4'h2;
+parameter ROM_WR_WAIT1 = 4'h3;
 parameter ROM_WR_WAIT2 = 4'h1;
 parameter ROM_WR_WAIT_MCU = 4'h5;
 
@@ -533,8 +534,12 @@ initial ROM_SAr = 1'b1;
 //wire ROM_SA = SNES_FAKE_CLK | ((STATE == ST_IDLE) ^ (~RQ_MCU_RDYr & SNES_cycle_end));
 wire ROM_SA = ROM_SAr;
 
-assign ROM_ADDR  = (SD_DMA_TO_ROM) ? MCU_ADDR[23:1] : (ROM_SA) ? MAPPED_SNES_ADDR[23:1] : ROM_ADDRr[23:1];
-assign ROM_ADDR0 = (SD_DMA_TO_ROM) ? MCU_ADDR[0] : (ROM_SA) ? MAPPED_SNES_ADDR[0] : ROM_ADDRr[0];
+//assign ROM_ADDR  = (SD_DMA_TO_ROM) ? MCU_ADDR[23:1] : (ROM_SA) ? MAPPED_SNES_ADDR[23:1] : ROM_ADDRr[23:1];
+//assign ROM_ADDR0 = (SD_DMA_TO_ROM) ? MCU_ADDR[0] : (ROM_SA) ? MAPPED_SNES_ADDR[0] : ROM_ADDRr[0];
+
+//WARNING DUE TO BAD SOLDER WE LOST HALF OF THE PSRAM!!!
+assign ROM_ADDR  = (SD_DMA_TO_ROM) ? MCU_ADDR[22:0] : (ROM_SA) ? MAPPED_SNES_ADDR[22:0] : ROM_ADDRr[22:0];
+assign ROM_ADDR0 = 1'b0; //(SD_DMA_TO_ROM) ? MCU_ADDR[0] : (ROM_SA) ? MAPPED_SNES_ADDR[0] : ROM_ADDRr[0];
 
 reg ROM_WEr;
 initial ROM_WEr = 1'b1;
@@ -581,14 +586,12 @@ always @(posedge CLK2) begin
 		ROM_DOUT_ENr <= 1'b0;
 	   if(SNES_cycle_start & ~SNES_WRITE) begin
 		  STATE <= ST_SNES_WR_ADDR;
-		  if(IS_SAVERAM | IS_WRITABLE | IS_FLASHWR) begin
+		  if(IS_WRITABLE | (IS_FLASHWR & ~bsx_tristate)) begin
 		    ROM_WEr <= 1'b0;
-          ROM_DOUT_ENr <= 1'b1;
         end
 		end else if(SNES_cycle_start) begin
-//		  STATE <= ST_SNES_RD_ADDR;		  
-        STATE <= ST_SNES_RD_END;
-        SNES_DOUTr <= (ROM_ADDR0 ? ROM_DATA[7:0] : ROM_DATA[15:8]);
+		  STATE <= ST_SNES_RD_ADDR;		  
+//        STATE <= ST_SNES_RD_END;
 		end else if(SNES_DEADr & MCU_RD_PENDr) begin
 		  STATE <= ST_MCU_RD_ADDR;
 		end else if(SNES_DEADr & MCU_WR_PENDr) begin
@@ -601,12 +604,15 @@ always @(posedge CLK2) begin
 	 end
 	 ST_SNES_RD_WAIT: begin
 	   ST_MEM_DELAYr <= ST_MEM_DELAYr - 1;
-//		if(ST_MEM_DELAYr == 0) begin
-//		end
-//		else STATE <= ST_SNES_RD_WAIT;
+		if(ST_MEM_DELAYr == 0) begin
+		  STATE <= ST_SNES_RD_END;
+		  SNES_DOUTr <= (ROM_ADDR0 ? ROM_DATA[7:0] : ROM_DATA[15:8]);
+		end
+		else STATE <= ST_SNES_RD_WAIT;
 	 end
 	 
 	 ST_SNES_WR_ADDR: begin
+      ROM_DOUT_ENr <= 1'b1;
 	   ST_MEM_DELAYr <= ROM_WR_WAIT1;
 	   STATE <= ST_SNES_WR_WAIT1;
 	 end
@@ -624,11 +630,12 @@ always @(posedge CLK2) begin
 		if(ST_MEM_DELAYr == 0) begin
         STATE <= ST_SNES_WR_END;
 		  ROM_WEr <= 1'b1;
+        ROM_DOUT_ENr <= 1'b0;		
 		end
 		else STATE <= ST_SNES_WR_WAIT2;
     end
 	 ST_SNES_RD_END, ST_SNES_WR_END: begin
-	   ROM_DOUT_ENr <= 1'b0;		
+//	   ROM_DOUT_ENr <= 1'b0;		
       if(MCU_RD_PENDr) begin
         STATE <= ST_MCU_RD_ADDR;
       end else if(MCU_WR_PENDr) begin
@@ -648,7 +655,7 @@ always @(posedge CLK2) begin
 		else STATE <= ST_MCU_RD_WAIT;
 	 end
 	 ST_MCU_RD_END: begin
-      MCU_DINr <= ROM_ADDRr[0] ? ROM_DATA[7:0] : ROM_DATA[15:8];
+      MCU_DINr <= ROM_DATA[7:0] | ROM_DATA[15:8]; /*ROM_ADDRr[0] ? ROM_DATA[7:0] : ROM_DATA[15:8];*/
 	   STATE <= ST_IDLE;
 	 end
 	 
@@ -657,18 +664,18 @@ always @(posedge CLK2) begin
       ROM_SAr <= 1'b0;
 	   ST_MEM_DELAYr <= ROM_WR_WAIT_MCU;
 		STATE <= ST_MCU_WR_WAIT;
-		ROM_DOUT_ENr <= 1'b1;
 		ROM_WEr <= 1'b0;
 	 end
 	 ST_MCU_WR_WAIT: begin
 	   ST_MEM_DELAYr <= ST_MEM_DELAYr - 1;
+		ROM_DOUT_ENr <= 1'b1;
 		if(ST_MEM_DELAYr == 0) begin
 		  ROM_WEr <= 1'b1;
 		  STATE <= ST_MCU_WR_END;
 		end
 		else STATE <= ST_MCU_WR_WAIT;	 
 	 end
-	 ST_MCU_WR_END: begin
+ 	 ST_MCU_WR_END: begin
 		ROM_DOUT_ENr <= 1'b0;
 	   STATE <= ST_IDLE;
 	 end
@@ -704,18 +711,25 @@ always @(posedge CLK2) begin
   MCU_WRITE_1<= MCU_WRITE;
 end
 
+/*
 assign ROM_DATA[7:0] = ROM_ADDR0
                        ?(SD_DMA_TO_ROM ? (!MCU_WRITE_1 ? MCU_DOUT : 8'bZ)
-							                   /*: ((~SNES_WRITE & (IS_WRITABLE | IS_FLASHWR)) ? SNES_DATA */
+							                   //: ((~SNES_WRITE & (IS_WRITABLE | IS_FLASHWR)) ? SNES_DATA 
                                         : (ROM_DOUT_ENr ? ROM_DOUTr : 8'bZ) //)
                         )
                        :8'bZ;
 
 assign ROM_DATA[15:8] = ROM_ADDR0 ? 8'bZ
                         :(SD_DMA_TO_ROM ? (!MCU_WRITE_1 ? MCU_DOUT : 8'bZ)
-								                 /*:  ((~SNES_WRITE & (IS_WRITABLE | IS_FLASHWR)) ? SNES_DATA */
+								                 //:  ((~SNES_WRITE & (IS_WRITABLE | IS_FLASHWR)) ? SNES_DATA 
                                          : (ROM_DOUT_ENr ? ROM_DOUTr : 8'bZ) //)
                          );
+*/
+assign ROM_DATA[7:0] = SD_DMA_TO_ROM ? (!MCU_WRITE_1 ? MCU_DOUT : 8'bZ)
+							  : (ROM_DOUT_ENr ? ROM_DOUTr : 8'bZ);
+
+assign ROM_DATA[15:8] = SD_DMA_TO_ROM ? (!MCU_WRITE_1 ? MCU_DOUT : 8'bZ)
+								                 : (ROM_DOUT_ENr ? ROM_DOUTr : 8'bZ);
 
 assign ROM_WE = SD_DMA_TO_ROM
                 ?MCU_WRITE
@@ -726,8 +740,8 @@ assign ROM_OE = 1'b0;
 
 assign ROM_CE = 1'b0;
 
-assign ROM_BHE = /*(~SD_DMA_TO_ROM & ~ROM_WE & ~ROM_SA) ?*/ ROM_ADDR0 /*: 1'b0*/;
-assign ROM_BLE = /*(~SD_DMA_TO_ROM & ~ROM_WE & ~ROM_SA) ?*/ !ROM_ADDR0 /*: 1'b0*/;
+assign ROM_BHE = 1'b0; ///*(~SD_DMA_TO_ROM & ~ROM_WE & ~ROM_SA) ?*/ ROM_ADDR0 /*: 1'b0*/;
+assign ROM_BLE = 1'b0; ///*(~SD_DMA_TO_ROM & ~ROM_WE & ~ROM_SA) ?*/ !ROM_ADDR0 /*: 1'b0*/;
 
 assign SNES_DATABUS_OE = (dspx_enable | dspx_dp_enable) ? 1'b0 :
                          msu_enable ? 1'b0 :
@@ -739,6 +753,7 @@ assign SNES_DATABUS_OE = (dspx_enable | dspx_dp_enable) ? 1'b0 :
                          ((IS_ROM & SNES_CS)
                           |(!IS_ROM & !IS_SAVERAM & !IS_WRITABLE & !IS_FLASHWR)
                           |(SNES_READr[0] & SNES_WRITEr[0])
+                          | bsx_tristate
                          );
 
 assign SNES_DATABUS_DIR = (!SNES_READr[0] | (!SNES_PARD & (r213f_enable | snescmd_rd_enable)))
@@ -747,7 +762,7 @@ assign SNES_DATABUS_DIR = (!SNES_READr[0] | (!SNES_PARD & (r213f_enable | snescm
 
 assign SNES_IRQ = 1'b0;
 
-assign p113_out = 1'b0;
+assign p113_out = 1'b1;
 
 /*
 wire [35:0] CONTROL0;
