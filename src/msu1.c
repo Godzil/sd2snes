@@ -214,7 +214,7 @@ int msu1_loop() {
       sd_offload_tgt=2;
       ff_sd_offload=1;
       msu_res = f_read(&msufile, file_buf, 8192, &msu_data_bytes_read);
-      DBG_MSU1 printf("data buffer refilled. res=%d page1=%08lx page2=%08lx\n", msu_res, msu_page1_start, msu_page2_start);
+      DBG_MSU1 printf("data buffer refilled. page=%d res=%d page1=%08lx page2=%08lx\n", pageno, msu_res, msu_page1_start, msu_page2_start);
     }
 
     /* Audio buffer refill */

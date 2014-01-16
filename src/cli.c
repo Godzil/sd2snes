@@ -104,11 +104,11 @@ static int32_t parse_unsigned(uint32_t lower, uint32_t upper, uint8_t base) {
 /* Parse the string starting with curchar for a word in wordlist */
 static int8_t parse_wordlist(char *wordlist) {
   uint8_t i, matched;
-  char *cur, *ptr;
-  char c;
+  unsigned char *cur, *ptr;
+  unsigned char c;
 
   i = 0;
-  ptr = wordlist;
+  ptr = (unsigned char *)wordlist;
 
   // Command list on "?"
   if (strlen(curchar) == 1 && *curchar == '?') {
@@ -128,7 +128,7 @@ static int8_t parse_wordlist(char *wordlist) {
   }
 
   while (1) {
-    cur = curchar;
+    cur = (unsigned char *)curchar;
     matched = 1;
     c = *ptr;
     do {
@@ -140,7 +140,7 @@ static int8_t parse_wordlist(char *wordlist) {
 
       if (tolower((int)c) != tolower((int)*cur)) {
         // Check for end-of-word
-        if (cur != curchar && (*cur == ' ' || *cur == 0)) {
+        if (cur != (unsigned char*)curchar && (*cur == ' ' || *cur == 0)) {
           // Partial match found, return that
           break;
         } else {
@@ -156,7 +156,7 @@ static int8_t parse_wordlist(char *wordlist) {
     if (matched) {
       char *tmp = curchar;
 
-      curchar = cur;
+      curchar = (char *)cur;
       // Return match only if whitespace or end-of-string follows
       // (avoids mismatching partial words)
       if (skip_spaces()) {

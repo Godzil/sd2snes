@@ -83,6 +83,10 @@ void snes_reset_pulse() {
  *  state: put SNES in reset state when 1, release when 0
  */
 void snes_reset(int state) {
+  if (state == 0)
+    printf("Releasing SNES RESET\n");
+  else
+    printf("Pull SNES RESET\n");
   BITBAND(SNES_RESET_REG->FIODIR, SNES_RESET_BIT) = state;
 }
 
@@ -170,12 +174,16 @@ void get_selected_name(uint8_t* fn) {
   sram_readblock(fn, addr + 7 + SRAM_MENU_ADDR, 256);
 }
 
-void snes_bootprint(void* msg) {
+void snes_bootprint(void* msg)
+{
+  printf("%s\n", (char*)msg);
   sram_writeblock(msg, SRAM_CMD_ADDR, 33);
 }
 
-void snes_menu_errmsg(int err, void* msg) {
+void snes_menu_errmsg(int err, void* msg)
+{
+  printf("%d: %s\n", err, (char*)msg);
   sram_writeblock(msg, SRAM_CMD_ADDR+1, 64);
   sram_writebyte(err, SRAM_CMD_ADDR);
 }
-
+  

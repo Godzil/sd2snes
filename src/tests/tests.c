@@ -152,73 +152,177 @@ int test_fpga() {
   return PASSED;
 }
 
-int test_mem() {
-  printf("RAM test\n========\n");
-  printf("Testing RAM0 (128Mbit) - writing RAM -");
-  uint32_t addr;
+/*************************************************************************************/
+/*************************************************************************************/
+
+typedef struct memory_test
+{
+  char name[20];
+  int a_len;
+  int d_len;
+
+  unsigned int (*read)(unsigned int addr);
+  void (*write)(unsigned int addr, unsigned int data);
+  void (*open)(void);
+  void (*close)(void);
+} memory_test;
+
+/*************************************************************************************/
+
+void rom_open(void)
+{
   snes_reset(1);
   fpga_select_mem(0);
-  set_mcu_addr(0);
   FPGA_DESELECT();
   delay_ms(1);
   FPGA_SELECT();
   delay_ms(1);
-  FPGA_TX_BYTE(0x98);
-  for(addr=0; addr < 16777216; addr++) {
-    if((addr&0xffff) == 0)printf("\x8%c", PROGRESS[(addr>>16)&3]);
-    FPGA_TX_BYTE((addr)+(addr>>8)+(addr>>16));
-    FPGA_WAIT_RDY();
-  }
-  FPGA_DESELECT();
-  printf(" verifying RAM -");
-  uint8_t data, expect, error=0, failed=0;
-  set_mcu_addr(0);
-  FPGA_SELECT();
-  FPGA_TX_BYTE(0x88);
-  for(addr=0; addr < 16777216; addr++) {
-    if((addr&0xffff) == 0)printf("\x8%c", PROGRESS[(addr>>16)&3]);
-    FPGA_WAIT_RDY();
-    data = FPGA_RX_BYTE();
-    expect = (addr)+(addr>>8)+(addr>>16);
-    if(data != expect) {
-      printf("error @0x%06lx: expected 0x%02x, got 0x%02x\n", addr, expect, data);
-      error++;
-      failed=1;
-      if(error>20) {
-        printf("too many errors, aborting\n");
-        break;
-      }
-    }
-  }
-  FPGA_DESELECT();
-  if(error) printf("RAM0 FAILED\n");
-  else printf("RAM0 PASSED\n");
-  printf("Testing RAM1 (4Mbit) - writing RAM - ");
+}
+void rom_close(void)
+{
+}
+
+unsigned int rom_read(unsigned int addr)
+{
+  return sram_readbyte(addr);
+}
+
+void rom_write(unsigned int addr, unsigned int data)
+{
+  sram_writebyte(data, addr);
+}
+
+memory_test rom = {
+  .name = "RAM0 (128Mbit)",
+  .a_len = 22,
+  .d_len = 8,
+  .read = rom_read,
+  .write = rom_write,
+  .open = rom_open,
+  .close = rom_close,
+};
+
+/*************************************************************************************/
+
+void sram_open(void)
+{
   snes_reset(1);
   fpga_select_mem(1);
-  for(addr=0; addr < 524288; addr++) {
-    sram_writebyte((addr)+(addr>>8)+(addr>>16), addr);
-  }
-  printf("verifying RAM...");
-  error = 0;
-  for(addr=0; addr < 524288; addr++) {
-    data = sram_readbyte(addr);
-    expect = (addr)+(addr>>8)+(addr>>16);
-    if(data != expect) {
-      printf("error @0x%05lx: expected 0x%02x, got 0x%02x\n", addr, expect, data);
-      error++;
-      failed=1;
-      if(error>20) {
-        printf("too many errors, aborting\n");
-        break;
-      }
+}
+
+void sram_close(void)
+{
+}
+
+unsigned int sram_read(unsigned int addr)
+{
+  return sram_readbyte(addr);
+}
+
+void sram_write(unsigned int addr, unsigned int data)
+{
+  sram_writebyte(data, addr);
+}
+
+memory_test sram = 
+{
+  .name = "RAM1(4Mbit)",
+  .a_len = 19,
+  .d_len = 8,
+  .read = sram_read,
+  .write = sram_write,
+  .open = sram_open,
+  .close = sram_close,
+};
+
+int do_test(memory_test *test)
+{
+  int i, j, read, want;
+  int ret = 0;
+  int a_mask = (1 << test->a_len) - 1;
+  int d_mask = (1 << test->d_len) - 1;
+
+  test->open();
+
+  printf("-- Will test %s\n", test->name);
+  printf("---- Fill with AA55  ");
+  test->write(0, 0xAA);
+  for (i = 1; i < a_mask; i++)
+  {
+    if((i&0xffff) == 0)printf("\x8%c", PROGRESS[(i>>16)&3]);
+    want = (i&1)?0x55:0xAA;
+    test->write(i, want);
+
+    want = ((i-1)&1)?0x55:0xAA;
+    read = test->read(i-1);
+
+    if (read != want)
+    {
+      printf("Failed [@%8X Want: %02X Get: %02X]", i-1, want, read);
+      ret |= 1;
+      break;
     }
   }
-  if(error) printf("RAM1 FAILED\n\n\n");
-  else printf("RAM1 PASSED\n\n\n");
-  if(failed) return FAILED;
+
+  printf("Ok \n---- Fill with 00    ");
+  for (i = 0; i < a_mask; i++)
+  {
+    if((i&0xffff) == 0)printf("\x8%c", PROGRESS[(i>>16)&3]);
+    test->write(i, 0);
+  }
+
+  printf("Ok \n---- Check data lines...\n"
+         "-----           ");
+  for (i = 0; i < test->d_len; i++) printf("%X", i);
+  printf("\n");
+  /* Check on 4 addresses, taken evenly */
+#define TEST_NUM (10)
+
+  for (j = 0; j < TEST_NUM; j ++)
+  {
+    printf("----- %8X [", j * a_mask/TEST_NUM);
+    for (i = 0; i < test->d_len; i++)
+    {
+      read = test->read(j * a_mask/TEST_NUM);
+      if ((test->read(j * a_mask/TEST_NUM) & (1<<i)) != 0)
+      {
+        printf("1", read);
+        ret |= 2;
+        goto next_data;
+      }
+      test->write(j * a_mask/TEST_NUM, (1<<i));
+      read = test->read(j * a_mask/TEST_NUM);
+      if (read == 0)
+      {
+        printf("0");
+        ret |= 4;
+        goto next_data;
+      }
+      printf("x");
+
+next_data:
+      test->write(j * a_mask/4, 0);
+    }
+    printf("]\n");
+  }
+
+
+  test->close();
+  return ret;
+}
+
+int test_mem()
+{
+  int ret = PASSED;
+  printf("RAM test\n========\n");
+
+  if (do_test(&rom) != 0)
+    ret = FAILED;
+  if (do_test(&sram) != 0);
+    ret = FAILED;
   return PASSED;
 }
+
 
 int test_clk() {
   uint32_t sysclk[4];

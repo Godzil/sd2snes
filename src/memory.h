@@ -30,24 +30,26 @@
 #include <arm/NXP/LPC17xx/LPC17xx.h>
 #include "smc.h"
 
-#define SRAM_ROM_ADDR           (0x000000L)
-#define SRAM_SAVE_ADDR          (0xE00000L)
+#define MASK_BITS                (0x000000)
 
-#define SRAM_MENU_ADDR          (0xC00000L)
-#define SRAM_DIR_ADDR           (0xC10000L)
-#define SRAM_DB_ADDR            (0xC80000L)
+#define SRAM_ROM_ADDR           ((0x000000L) & ~MASK_BITS)
+#define SRAM_SAVE_ADDR          ((0x600000L) & ~MASK_BITS)
 
-#define SRAM_SPC_DATA_ADDR      (0xFD0000L)
-#define SRAM_SPC_HEADER_ADDR    (0xFE0000L)
+#define SRAM_MENU_ADDR          ((0x500000L) & ~MASK_BITS)
+#define SRAM_DIR_ADDR           ((0x510000L) & ~MASK_BITS)
+#define SRAM_DB_ADDR            ((0x580000L) & ~MASK_BITS)
 
-#define SRAM_MENU_SAVE_ADDR     (0xFF0000L)
-#define SRAM_CMD_ADDR           (0xFF1000L)
-#define SRAM_PARAM_ADDR         (0xFF1004L)
-#define SRAM_STATUS_ADDR        (0xFF1100L)
-#define SRAM_SYSINFO_ADDR       (0xFF1200L)
-#define SRAM_LASTGAME_ADDR      (0xFF1420L)
-#define SRAM_SCRATCHPAD         (0xFFFF00L)
-#define SRAM_DIRID              (0xFFFFF0L)
+#define SRAM_SPC_DATA_ADDR      ((0x7D0000L) & ~MASK_BITS)
+#define SRAM_SPC_HEADER_ADDR    ((0x7E0000L) & ~MASK_BITS)
+
+#define SRAM_MENU_SAVE_ADDR     ((0x7F0000L) & ~MASK_BITS)
+#define SRAM_CMD_ADDR           ((0x7F1000L) & ~MASK_BITS)
+#define SRAM_PARAM_ADDR         ((0x7F1004L) & ~MASK_BITS)
+#define SRAM_STATUS_ADDR        ((0x7F1100L) & ~MASK_BITS)
+#define SRAM_SYSINFO_ADDR       ((0x7F1200L) & ~MASK_BITS)
+#define SRAM_LASTGAME_ADDR      ((0x7F1420L) & ~MASK_BITS)
+#define SRAM_SCRATCHPAD         ((0x7FFF00L) & ~MASK_BITS)
+#define SRAM_DIRID              ((0x7FFFF0L) & ~MASK_BITS)
 #define SRAM_RELIABILITY_SCORE  (0x100)
 
 #define LOADROM_WITH_SRAM	(1)

@@ -33,5 +33,7 @@ void xmodem_rxfile(FIL* fil) {
   uart_putc(ASC_ACK);
   uart_flush();
   sleep_ms(1000);
+  sender_sum = blknum + blknum2;
+  printf("%x:%x:%x\n", blknum, blknum2, sender_sum);
   printf("received %ld bytes, wrote %ld bytes. last res = %d\n", totalbytes, totalwritten, res);
 }

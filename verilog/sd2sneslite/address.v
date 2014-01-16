@@ -47,10 +47,10 @@ assign IS_SAVERAM = (!SNES_ADDR[22]
                         );
 
 assign SRAM_SNES_ADDR = (IS_SAVERAM
-                             ? 24'hFF0000 + ((SNES_ADDR[14:0] - 15'h6000)
+                             ? 24'h7F0000 + ((SNES_ADDR[14:0] - 15'h6000)
                                              & SAVERAM_MASK)
                              : (({1'b0, SNES_ADDR[22:0]} & ROM_MASK)
-                                + 24'hC00000)
+                                + 24'h500000)
                          );
 								 
 assign ROM_ADDR = SRAM_SNES_ADDR;

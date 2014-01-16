@@ -124,7 +124,8 @@ NM = $(ARCH)-nm
 REMOVE = rm -f
 COPY = cp
 AWK = awk
-
+RLE = ../utils/rle
+BIN2H = utils/bin2h
 
 #---------------- Compiler Options ----------------
 #  -g*:          generate debugging information
@@ -197,7 +198,7 @@ ALL_ASFLAGS = -I. -x assembler-with-cpp $(ASFLAGS) $(CDEFS)
 # Default target.
 all: build
 
-build: elf bin hex
+build: elf bin hex cfgware.h
 	$(E) "  SIZE   $(TARGET).elf"
 	$(Q)$(ELFSIZE)|grep -v debug
 	cp $(TARGET).bin $(OBJDIR)/firmware.img
@@ -230,6 +231,13 @@ HEXSIZE = $(SIZE) --target=$(FORMAT) $(TARGET).hex
 ELFSIZE = $(SIZE) -A $(TARGET).elf
 
 
+# Generate cfgware.h
+cfgware.h: $(OBJDIR)/fpga_rle.bit
+	$(E) "  BIN2H  $@"
+	$(Q) $(BIN2H) $< $@
+$(OBJDIR)/fpga_rle.bit: sd2sneslite.bit
+	$(E) "  RLE    $@"
+	$(Q) $(RLE) $< $@
 
 # Generate autoconf.h from config
 .PRECIOUS : $(OBJDIR)/autoconf.h
@@ -302,6 +310,7 @@ clean_list :
 	$(Q)$(REMOVE) $(TARGET).sym
 	$(Q)$(REMOVE) $(TARGET).lss
 	$(Q)$(REMOVE) $(OBJ)
+	$(Q)$(REMOVE) cfgware.h
 	$(Q)$(REMOVE) $(OBJDIR)/autoconf.h
 	$(Q)$(REMOVE) $(OBJDIR)/*.bin
 	$(Q)$(REMOVE) $(LST)

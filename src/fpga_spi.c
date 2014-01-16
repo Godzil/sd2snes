@@ -214,6 +214,7 @@ uint16_t fpga_status() {
 }
 
 void fpga_set_sddma_range(uint16_t start, uint16_t end) {
+  printf("%s %08X -> %08X\n", __func__, start, end);
   FPGA_SELECT();
   FPGA_TX_BYTE(FPGA_CMD_SDDMA_RANGE);
   FPGA_TX_BYTE(start>>8);

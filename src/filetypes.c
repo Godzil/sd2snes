@@ -275,6 +275,7 @@ uint32_t scan_dir(char* path, FILINFO* fno_param, char mkdb, uint32_t this_dir_t
   sram_writeshort(num_dirs_total, SRAM_DB_ADDR+14);
   if(depth==0) return crc;
   else return switched_dir_tgt;
+  return was_empty; // tricky!
 }
 
 
