@@ -198,7 +198,7 @@ ALL_ASFLAGS = -I. -x assembler-with-cpp $(ASFLAGS) $(CDEFS)
 # Default target.
 all: build
 
-build: elf bin hex cfgware.h
+build: cfgware.h elf bin hex
 	$(E) "  SIZE   $(TARGET).elf"
 	$(Q)$(ELFSIZE)|grep -v debug
 	cp $(TARGET).bin $(OBJDIR)/firmware.img
@@ -235,6 +235,7 @@ ELFSIZE = $(SIZE) -A $(TARGET).elf
 cfgware.h: $(OBJDIR)/fpga_rle.bit
 	$(E) "  BIN2H  $@"
 	$(Q) $(BIN2H) $< $@
+
 $(OBJDIR)/fpga_rle.bit: sd2sneslite.bit
 	$(E) "  RLE    $@"
 	$(Q) $(RLE) $< $@

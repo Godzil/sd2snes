@@ -4,7 +4,7 @@
 # file to a C header. No copyright claimed.
 
 BEGIN {
-  print "// autoconf.h generated from " ARGV[1] " at " strftime() "\n" \
+  print "// autoconf.h generated from " ARGV[1] " at NOW\n" \
     "#ifndef AUTOCONF_H\n" \
     "#define AUTOCONF_H"
 }

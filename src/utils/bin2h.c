@@ -3,20 +3,20 @@
 
 int main(int argc, char *argv[])
 {
-   char var_name[30] = "cfgware"
+	char var_name[30] = "cfgware";
    FILE *fpIn = NULL, *fpOut = NULL;
    unsigned char buffer[5], i;
-   if ( argc == 4 )
+   if ( argc == 3 )
    {
       fpIn = fopen(argv[1], "rb");
       fpOut = fopen(argv[2], "wt");
    }
-   else if (argc == 3)
+   else if (argc == 2)
    {
       fpIn = fopen(argv[1], "rb");
       fpOut = stdout;
    }
-   else if ( argc == 2 )
+   else if ( argc == 1 )
    {
       fpIn = stdin;
       fpOut = stdout;
@@ -27,8 +27,8 @@ int main(int argc, char *argv[])
       return -1;
    }
    
-   if (argc > 1)
-      sprintf()
+//   if (argc > 1)
+//      sprintf()
 
    if (fpIn == NULL) { fprintf(stderr, "Can't open '%s`: Aborting.", argv[1]); return -1; }
    if (fpOut == NULL) { fprintf(stderr, "Can't open '%s`: Aborting.", argv[2]); return -1; }
