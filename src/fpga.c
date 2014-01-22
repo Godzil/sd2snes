@@ -52,147 +52,208 @@
 #include "rle.h"
 #include "cfgware.h"
 
-void fpga_set_prog_b(uint8_t val) {
-  if(val)
-    BITBAND(PROGBREG->FIOSET, PROGBBIT) = 1;
-  else
-    BITBAND(PROGBREG->FIOCLR, PROGBBIT) = 1;
+void fpga_set_prog_b( uint8_t val )
+{
+    if ( val )
+    {
+        BITBAND( PROGBREG->FIOSET, PROGBBIT ) = 1;
+    }
+    else
+    {
+        BITBAND( PROGBREG->FIOCLR, PROGBBIT ) = 1;
+    }
 }
 
-void fpga_set_cclk(uint8_t val) {
-  if(val)
-    BITBAND(CCLKREG->FIOSET, CCLKBIT) = 1;
-  else
-    BITBAND(CCLKREG->FIOCLR, CCLKBIT) = 1;
+void fpga_set_cclk( uint8_t val )
+{
+    if ( val )
+    {
+        BITBAND( CCLKREG->FIOSET, CCLKBIT ) = 1;
+    }
+    else
+    {
+        BITBAND( CCLKREG->FIOCLR, CCLKBIT ) = 1;
+    }
 }
 
-int fpga_get_initb() {
-  return BITBAND(INITBREG->FIOPIN, INITBBIT);
+int fpga_get_initb()
+{
+    return BITBAND( INITBREG->FIOPIN, INITBBIT );
 }
 
-void fpga_init() {
-/* mainly GPIO directions */
-  BITBAND(CCLKREG->FIODIR, CCLKBIT) = 1; /* CCLK */
-  BITBAND(DONEREG->FIODIR, DONEBIT) = 0; /* DONE */
-  BITBAND(PROGBREG->FIODIR, PROGBBIT) = 1; /* PROG_B */
-  BITBAND(DINREG->FIODIR, DINBIT) = 1; /* DIN */
-  BITBAND(INITBREG->FIODIR, INITBBIT) = 0; /* INIT_B */
+void fpga_init()
+{
+    /* mainly GPIO directions */
+    BITBAND( CCLKREG->FIODIR, CCLKBIT ) = 1; /* CCLK */
+    BITBAND( DONEREG->FIODIR, DONEBIT ) = 0; /* DONE */
+    BITBAND( PROGBREG->FIODIR, PROGBBIT ) = 1; /* PROG_B */
+    BITBAND( DINREG->FIODIR, DINBIT ) = 1; /* DIN */
+    BITBAND( INITBREG->FIODIR, INITBBIT ) = 0; /* INIT_B */
 
-  LPC_GPIO2->FIOMASK1 = 0;
+    LPC_GPIO2->FIOMASK1 = 0;
+    SPI_OFFLOAD = 0;
 
-  SPI_OFFLOAD=0;
-  fpga_set_cclk(0);    /* initial clk=0 */
+    fpga_set_cclk( 0 );  /* initial clk=0 */
 }
 
-int fpga_get_done(void) {
-  return BITBAND(DONEREG->FIOPIN, DONEBIT);
+int fpga_get_done( void )
+{
+    return BITBAND( DONEREG->FIOPIN, DONEBIT );
 }
 
-void fpga_postinit() {
-  LPC_GPIO2->FIOMASK1 = 0;
+void fpga_postinit()
+{
+    LPC_GPIO2->FIOMASK1 = 0;
 }
 
-void fpga_pgm(uint8_t* filename) {
-  int MAXRETRIES = 10;
-  int retries = MAXRETRIES;
-  uint8_t data;
-  int i;
-  tick_t timeout;
-  do {
-    i=0;
-    timeout = getticks() + 100;
-    fpga_set_prog_b(0);
-if(BITBAND(PROGBREG->FIOPIN, PROGBBIT)) {
-  printf("PROGB is stuck high!\n");
-  led_panic();
-}
-    uart_putc('P');
-    fpga_set_prog_b(1);
-    while(!fpga_get_initb()){
-      if(getticks() > timeout) {
-        printf("no response from FPGA trying to initiate configuration!\n");
+void fpga_pgm( uint8_t *filename )
+{
+    int MAXRETRIES = 10;
+    int retries = MAXRETRIES;
+    uint8_t data;
+    int i;
+    tick_t timeout;
+
+    do
+    {
+        i = 0;
+        timeout = getticks() + 100;
+        fpga_set_prog_b( 0 );
+
+        if ( BITBAND( PROGBREG->FIOPIN, PROGBBIT ) )
+        {
+            printf( "PROGB is stuck high!\n" );
+            led_panic();
+        }
+
+        uart_putc( 'P' );
+        fpga_set_prog_b( 1 );
+
+        while ( !fpga_get_initb() )
+        {
+            if ( getticks() > timeout )
+            {
+                printf( "no response from FPGA trying to initiate configuration!\n" );
+                led_panic();
+            }
+        };
+
+        if ( fpga_get_done() )
+        {
+            printf( "DONE is stuck high!\n" );
+            led_panic();
+        }
+
+        LPC_GPIO2->FIOMASK1 = ~( BV( 0 ) );
+        uart_putc( 'p' );
+
+
+        /* open configware file */
+        file_open( filename, FA_READ );
+
+        if ( file_res )
+        {
+            uart_putc( '?' );
+            uart_putc( 0x30 + file_res );
+            return;
+        }
+
+        uart_putc( 'C' );
+
+        for ( ;; )
+        {
+            data = rle_file_getc();
+            i++;
+
+            if ( file_status || file_res )
+            {
+                break;    /* error or eof */
+            }
+
+            FPGA_SEND_BYTE_SERIAL( data );
+        }
+
+        uart_putc( 'c' );
+        file_close();
+        printf( "fpga_pgm: %d bytes programmed\n", i );
+        delay_ms( 1 );
+    }
+    while ( !fpga_get_done() && retries-- );
+
+    if ( !fpga_get_done() )
+    {
+        printf( "FPGA failed to configure after %d tries.\n", MAXRETRIES );
         led_panic();
-      }
-    };
-    if(fpga_get_done()) {
-      printf("DONE is stuck high!\n");
-      led_panic();
     }
-    LPC_GPIO2->FIOMASK1 = ~(BV(0));
-    uart_putc('p');
 
-
-    /* open configware file */
-    file_open(filename, FA_READ);
-    if(file_res) {
-      uart_putc('?');
-      uart_putc(0x30+file_res);
-      return;
-    }
-    uart_putc('C');
-
-    for (;;) {
-      data = rle_file_getc();
-      i++;
-      if (file_status || file_res) break;   /* error or eof */
-      FPGA_SEND_BYTE_SERIAL(data);
-    }
-    uart_putc('c');
-    file_close();
-    printf("fpga_pgm: %d bytes programmed\n", i);
-    delay_ms(1);
-  } while (!fpga_get_done() && retries--);
-  if(!fpga_get_done()) {
-    printf("FPGA failed to configure after %d tries.\n", MAXRETRIES);
-    led_panic();
-  }
-  printf("FPGA configured\n");
-  fpga_postinit();
+    printf( "FPGA configured\n" );
+    fpga_postinit();
 }
 
-void fpga_rompgm() {
-  int MAXRETRIES = 10;
-  int retries = MAXRETRIES;
-  uint8_t data;
-  int i;
-  tick_t timeout;
-  do {
-    i=0;
-    timeout = getticks() + 100;
-    fpga_set_prog_b(0);
-    uart_putc('P');
-    fpga_set_prog_b(1);
-    while(!fpga_get_initb()){
-      if(getticks() > timeout) {
-        printf("no response from FPGA trying to initiate configuration!\n");
-        led_panic();
-      }
-    };
-    if(fpga_get_done()) {
-      printf("DONE is stuck high!\n");
-      led_panic();
-    }
-    LPC_GPIO2->FIOMASK1 = ~(BV(0));
-    uart_putc('p');
+void fpga_rompgm()
+{
+    int MAXRETRIES = 10;
+    int retries = MAXRETRIES;
+    uint8_t data;
+    int i;
+    tick_t timeout;
 
-    /* open configware file */
-    rle_mem_init(cfgware, sizeof(cfgware));
-    printf("sizeof(cfgware) = %d\n", sizeof(cfgware));
-    for (;;) {
-      data = rle_mem_getc();
-      if(rle_state) break;
-      i++;
-      FPGA_SEND_BYTE_SERIAL(data);
+    do
+    {
+        i = 0;
+        timeout = getticks() + 100;
+        fpga_set_prog_b( 0 );
+        uart_putc( 'P' );
+        fpga_set_prog_b( 1 );
+
+        while ( !fpga_get_initb() )
+        {
+            if ( getticks() > timeout )
+            {
+                printf( "no response from FPGA trying to initiate configuration!\n" );
+                led_panic();
+            }
+        };
+
+        if ( fpga_get_done() )
+        {
+            printf( "DONE is stuck high!\n" );
+            led_panic();
+        }
+
+        LPC_GPIO2->FIOMASK1 = ~( BV( 0 ) );
+        uart_putc( 'p' );
+
+        /* open configware file */
+        rle_mem_init( cfgware, sizeof( cfgware ) );
+        printf( "sizeof(cfgware) = %d\n", sizeof( cfgware ) );
+
+        for ( ;; )
+        {
+            data = rle_mem_getc();
+
+            if ( rle_state )
+            {
+                break;
+            }
+
+            i++;
+            FPGA_SEND_BYTE_SERIAL( data );
+        }
+
+        uart_putc( 'c' );
+        printf( "fpga_pgm: %d bytes programmed\n", i );
+        delay_ms( 1 );
     }
-    uart_putc('c');
-    printf("fpga_pgm: %d bytes programmed\n", i);
-    delay_ms(1);
-  } while (!fpga_get_done() && retries--);
-  if(!fpga_get_done()) {
-    printf("FPGA failed to configure after %d tries.\n", MAXRETRIES);
-    led_panic();
-  }
-  printf("FPGA configured\n");
-  fpga_postinit();
+    while ( !fpga_get_done() && retries-- );
+
+    if ( !fpga_get_done() )
+    {
+        printf( "FPGA failed to configure after %d tries.\n", MAXRETRIES );
+        led_panic();
+    }
+
+    printf( "FPGA configured\n" );
+    fpga_postinit();
 }
 

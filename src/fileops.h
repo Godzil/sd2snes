@@ -29,7 +29,7 @@
 #include <arm/NXP/LPC17xx/LPC17xx.h>
 #include "ff.h"
 
-enum filestates { FILE_OK=0, FILE_ERR, FILE_EOF };
+enum filestates { FILE_OK = 0, FILE_ERR, FILE_EOF };
 
 BYTE file_buf[512];
 FATFS fatfs;
@@ -39,16 +39,16 @@ uint8_t file_lfn[258];
 uint16_t file_block_off, file_block_max;
 enum filestates file_status;
 
-void file_init(void);
-void file_open(const uint8_t* filename, BYTE flags);
-FRESULT dir_open_by_filinfo(DIR* dir, FILINFO* fno_param);
-void file_open_by_filinfo(FILINFO* fno);
-void file_close(void);
-void file_seek(uint32_t offset);
-UINT file_read(void);
-UINT file_write(void);
-UINT file_readblock(void* buf, uint32_t addr, uint16_t size);
-UINT file_writeblock(void* buf, uint32_t addr, uint16_t size);
+void file_init( void );
+void file_open( const uint8_t *filename, BYTE flags );
+FRESULT dir_open_by_filinfo( DIR *dir, FILINFO *fno_param );
+void file_open_by_filinfo( FILINFO *fno );
+void file_close( void );
+void file_seek( uint32_t offset );
+UINT file_read( void );
+UINT file_write( void );
+UINT file_readblock( void *buf, uint32_t addr, uint16_t size );
+UINT file_writeblock( void *buf, uint32_t addr, uint16_t size );
 
-uint8_t file_getc(void);
+uint8_t file_getc( void );
 #endif

@@ -31,7 +31,27 @@
 #include "smc.h"
 
 #define MASK_BITS                (0x000000)
+#if 0
+#define SRAM_ROM_ADDR           ((0x000000L) & ~MASK_BITS)
+#define SRAM_SAVE_ADDR          ((0x400000L) & ~MASK_BITS)
 
+#define SRAM_MENU_ADDR          ((0x7A0000L) & ~MASK_BITS)
+#define SRAM_DIR_ADDR           ((0x410000L) & ~MASK_BITS)
+#define SRAM_DB_ADDR            ((0x420000L) & ~MASK_BITS)
+
+#define SRAM_SPC_DATA_ADDR      ((0x430000L) & ~MASK_BITS)
+#define SRAM_SPC_HEADER_ADDR    ((0x440000L) & ~MASK_BITS)
+
+#define SRAM_MENU_SAVE_ADDR     ((0x7F0000L) & ~MASK_BITS)
+#define SRAM_CMD_ADDR           ((0x7F1000L) & ~MASK_BITS)
+#define SRAM_PARAM_ADDR         ((0x7F1004L) & ~MASK_BITS)
+#define SRAM_STATUS_ADDR        ((0x7F1100L) & ~MASK_BITS)
+#define SRAM_SYSINFO_ADDR       ((0x7F1200L) & ~MASK_BITS)
+#define SRAM_LASTGAME_ADDR      ((0x7F1420L) & ~MASK_BITS)
+#define SRAM_SCRATCHPAD         ((0x7FFF00L) & ~MASK_BITS)
+#define SRAM_DIRID              ((0x7FFFF0L) & ~MASK_BITS)
+#define SRAM_RELIABILITY_SCORE  (0x100)
+#else
 #define SRAM_ROM_ADDR           ((0x000000L) & ~MASK_BITS)
 #define SRAM_SAVE_ADDR          ((0x600000L) & ~MASK_BITS)
 
@@ -51,31 +71,33 @@
 #define SRAM_SCRATCHPAD         ((0x7FFF00L) & ~MASK_BITS)
 #define SRAM_DIRID              ((0x7FFFF0L) & ~MASK_BITS)
 #define SRAM_RELIABILITY_SCORE  (0x100)
+#endif
 
-#define LOADROM_WITH_SRAM	(1)
-#define LOADROM_WITH_RESET	(2)
 
-uint32_t load_rom(uint8_t* filename, uint32_t base_addr, uint8_t flags);
-uint32_t load_spc(uint8_t* filename, uint32_t spc_data_addr, uint32_t spc_header_addr);
-uint32_t load_sram(uint8_t* filename, uint32_t base_addr);
-uint32_t load_sram_offload(uint8_t* filename, uint32_t base_addr);
-uint32_t load_sram_rle(uint8_t* filename, uint32_t base_addr);
-uint32_t load_bootrle(uint32_t base_addr);
-void load_dspx(const uint8_t* filename, uint8_t st0010);
-void sram_hexdump(uint32_t addr, uint32_t len);
-uint8_t sram_readbyte(uint32_t addr);
-uint16_t sram_readshort(uint32_t addr);
-uint32_t sram_readlong(uint32_t addr);
-void sram_writebyte(uint8_t val, uint32_t addr);
-void sram_writeshort(uint16_t val, uint32_t addr);
-void sram_writelong(uint32_t val, uint32_t addr);
-void sram_readblock(void* buf, uint32_t addr, uint16_t size);
-void sram_readlongblock(uint32_t* buf, uint32_t addr, uint16_t count);
-void sram_writeblock(void* buf, uint32_t addr, uint16_t size);
-void save_sram(uint8_t* filename, uint32_t sram_size, uint32_t base_addr);
-uint32_t calc_sram_crc(uint32_t base_addr, uint32_t size);
-uint8_t sram_reliable(void);
-void sram_memset(uint32_t base_addr, uint32_t len, uint8_t val);
-uint64_t sram_gettime(uint32_t base_addr);
+#define LOADROM_WITH_SRAM       (1)
+#define LOADROM_WITH_RESET      (2)
 
+uint32_t load_rom( uint8_t *filename, uint32_t base_addr, uint8_t flags );
+uint32_t load_spc( uint8_t *filename, uint32_t spc_data_addr, uint32_t spc_header_addr );
+uint32_t load_sram( uint8_t *filename, uint32_t base_addr );
+uint32_t load_sram_offload( uint8_t *filename, uint32_t base_addr );
+uint32_t load_sram_rle( uint8_t *filename, uint32_t base_addr );
+uint32_t load_bootrle( uint32_t base_addr );
+void load_dspx( const uint8_t *filename, uint8_t st0010 );
+void sram_hexdump( uint32_t addr, uint32_t len );
+uint8_t sram_readbyte( uint32_t addr );
+uint16_t sram_readshort( uint32_t addr );
+uint32_t sram_readlong( uint32_t addr );
+void sram_writebyte( uint8_t val, uint32_t addr );
+void sram_writeshort( uint16_t val, uint32_t addr );
+void sram_writelong( uint32_t val, uint32_t addr );
+void sram_readblock( void *buf, uint32_t addr, uint16_t size );
+void sram_readlongblock( uint32_t *buf, uint32_t addr, uint16_t count );
+void sram_writeblock( void *buf, uint32_t addr, uint16_t size );
+void save_sram( uint8_t *filename, uint32_t sram_size, uint32_t base_addr );
+uint32_t calc_sram_crc( uint32_t base_addr, uint32_t size );
+uint8_t sram_reliable( void );
+void sram_memset( uint32_t base_addr, uint32_t len, uint8_t val );
+uint64_t sram_gettime( uint32_t base_addr );
+void sram_readstrn( void *buf, uint32_t addr, uint16_t size );
 #endif

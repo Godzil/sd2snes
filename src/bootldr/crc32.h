@@ -42,14 +42,14 @@ extern "C" {
  * \param data_len     The width of \a data expressed in number of bits.
  * \return     The reflected data.
  *****************************************************************************/
-uint32_t crc_reflect(uint32_t data, size_t data_len);
+uint32_t crc_reflect( uint32_t data, size_t data_len );
 
 /**
  * Calculate the initial crc value.
  *
  * \return     The initial crc value.
  *****************************************************************************/
-static inline uint32_t crc_init(void)
+static inline uint32_t crc_init( void )
 {
     return 0xffffffff;
 }
@@ -62,7 +62,7 @@ static inline uint32_t crc_init(void)
  * \param data_len Number of bytes in the \a data buffer.
  * \return         The updated crc value.
  *****************************************************************************/
-uint32_t crc32_update(uint32_t crc, const unsigned char data);
+uint32_t crc32_update( uint32_t crc, const unsigned char data );
 
 /**
  * Calculate the final crc value.
@@ -70,9 +70,9 @@ uint32_t crc32_update(uint32_t crc, const unsigned char data);
  * \param crc  The current crc value.
  * \return     The final crc value.
  *****************************************************************************/
-static inline uint32_t crc_finalize(uint32_t crc)
+static inline uint32_t crc_finalize( uint32_t crc )
 {
-    return crc_reflect(crc, 32) ^ 0xffffffff;
+    return crc_reflect( crc, 32 ) ^ 0xffffffff;
 }
 
 

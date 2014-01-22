@@ -26,17 +26,19 @@
  * \param data_len     The width of \a data expressed in number of bits.
  * \return     The reflected data.
 ******************************************************************************/
-uint32_t crc_reflect(uint32_t data, size_t data_len)
+uint32_t crc_reflect( uint32_t data, size_t data_len )
 {
     unsigned int i;
     uint32_t ret;
 
     ret = data & 0x01;
-    for (i = 1; i < data_len; i++)
+
+    for ( i = 1; i < data_len; i++ )
     {
         data >>= 1;
-        ret = (ret << 1) | (data & 0x01);
+        ret = ( ret << 1 ) | ( data & 0x01 );
     }
+
     return ret;
 }
 
@@ -49,23 +51,31 @@ uint32_t crc_reflect(uint32_t data, size_t data_len)
  * \param data_len Number of bytes in the \a data buffer.
  * \return         The updated crc value.
  *****************************************************************************/
-uint32_t crc32_update(uint32_t crc, const unsigned char data)
+uint32_t crc32_update( uint32_t crc, const unsigned char data )
 {
     unsigned int i;
     uint32_t bit;
     unsigned char c;
 
     c = data;
-    for (i = 0x01; i & 0xff; i <<= 1) {
+
+    for ( i = 0x01; i & 0xff; i <<= 1 )
+    {
         bit = crc & 0x80000000;
-        if (c & i) {
+
+        if ( c & i )
+        {
             bit = !bit;
         }
+
         crc <<= 1;
-        if (bit) {
+
+        if ( bit )
+        {
             crc ^= 0x04c11db7;
         }
     }
+
     return crc & 0xffffffff;
 }
 

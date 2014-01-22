@@ -16,21 +16,21 @@
 
 #ifdef __AVR__
 #  include <avr/pgmspace.h>
-  void uart_puts_P(prog_char *text);
+void uart_puts_P( prog_char *text );
 #else
 #  define uart_puts_P(str) uart_puts(str)
 #endif
 
-void uart_init(void);
-unsigned char uart_getc(void);
-unsigned char uart_gotc(void);
-void uart_putc(char c);
-void uart_puts(const char *str);
-void uart_puthex(uint8_t num);
-void uart_trace(void *ptr, uint16_t start, uint16_t len);
-void uart_flush(void);
-int  printf(const char *fmt, ...);
-int  snprintf(char *str, size_t size, const char *format, ...);
+void uart_init( void );
+unsigned char uart_getc( void );
+unsigned char uart_gotc( void );
+void uart_putc( char c );
+void uart_puts( const char *str );
+void uart_puthex( uint8_t num );
+void uart_trace( void *ptr, uint16_t start, uint16_t len );
+void uart_flush( void );
+int  printf( const char *fmt, ... );
+int  snprintf( char *str, size_t size, const char *format, ... );
 #define uart_putcrlf() uart_putc('\n')
 
 /* A few symbols to make this code work for all four UARTs */

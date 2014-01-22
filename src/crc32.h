@@ -34,9 +34,9 @@ extern "C" {
  *
  * \return     The initial crc value.
  *****************************************************************************/
-static inline uint32_t crc_init(void)
+static inline uint32_t crc_init( void )
 {
-  return 0xffffffff;
+    return 0xffffffff;
 }
 
 /**
@@ -47,7 +47,7 @@ static inline uint32_t crc_init(void)
  * \param data_len Number of bytes in the \a data buffer.
  * \return         The updated crc value.
  *****************************************************************************/
-uint32_t crc32_update(uint32_t crc, const unsigned char data);
+uint32_t crc32_update( uint32_t crc, const unsigned char data );
 
 /**
  * Calculate the final crc value.
@@ -55,9 +55,9 @@ uint32_t crc32_update(uint32_t crc, const unsigned char data);
  * \param crc  The current crc value.
  * \return     The final crc value.
  *****************************************************************************/
-static inline uint32_t crc32_finalize(uint32_t crc)
+static inline uint32_t crc32_finalize( uint32_t crc )
 {
-  return crc ^ 0xffffffff;
+    return crc ^ 0xffffffff;
 }
 
 

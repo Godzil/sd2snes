@@ -73,7 +73,8 @@ void RIT_IRQHandler(void) {
   RIT_Hook();
 }
 
-void timer_init(void) {
+void timer_init(void)
+{
   /* turn on power to RIT */
   BITBAND(LPC_SC->PCONP, PCRIT) = 1;
 
@@ -87,7 +88,8 @@ void timer_init(void) {
   SysTick_Config((SysTick->CALIB & SysTick_CALIB_TENMS_Msk));
 }
 
-void delay_us(unsigned int time) {
+void delay_us(unsigned int time)
+{
   /* Prepare RIT */
   LPC_RIT->RICOUNTER = 0;
   LPC_RIT->RICOMPVAL = (CONFIG_CPU_FREQUENCY / 1000000) * time;

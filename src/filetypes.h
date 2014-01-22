@@ -35,24 +35,25 @@
 
 #include "ff.h"
 
-#define FS_MAX_DEPTH	(10)
-#define SYS_DIR_NAME	((const char*)"sd2snes")
-typedef enum {
-  TYPE_UNKNOWN = 0, /* 0 */
-  TYPE_SMC,         /* 1 */
-  TYPE_SRM,         /* 2 */
-  TYPE_SPC,         /* 3 */
-  TYPE_IPS          /* 4 */
+#define FS_MAX_DEPTH    (10)
+#define SYS_DIR_NAME    ((const char*)"sd2snes")
+typedef enum
+{
+    TYPE_UNKNOWN = 0, /* 0 */
+    TYPE_SMC,         /* 1 */
+    TYPE_SRM,         /* 2 */
+    TYPE_SPC,         /* 3 */
+    TYPE_IPS          /* 4 */
 } SNES_FTYPE;
 
 
 char fs_path[256];
-SNES_FTYPE determine_filetype(char* filename);
+SNES_FTYPE determine_filetype( char *filename );
 //uint32_t scan_fs();
-uint16_t scan_flat(const char* path);
-uint32_t scan_dir(char* path, FILINFO* fno_param, char mkdb, uint32_t this_subdir_tgt);
-FRESULT get_db_id(uint32_t*);
-int get_num_dirent(uint32_t addr);
-void sort_all_dir(uint32_t endaddr);
+uint16_t scan_flat( const char *path );
+uint32_t scan_dir( char *path, FILINFO *fno_param, char mkdb, uint32_t this_subdir_tgt );
+FRESULT get_db_id( uint32_t * );
+int get_num_dirent( uint32_t addr );
+void sort_all_dir( uint32_t endaddr );
 
 #endif

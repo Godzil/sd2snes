@@ -15,12 +15,13 @@
    * USB [enabled via usb_init]
    * PWM1
 */
-void power_init() {
-  LPC_SC->PCONP = BV(PCSSP0)
-                | BV(PCTIM3)
-                | BV(PCRTC)
-                | BV(PCGPIO)
-                | BV(PCPWM1)
-//                 | BV(PCUSB)
-  ;
+void power_init()
+{
+    LPC_SC->PCONP = BV( PCSSP0 )
+                    | BV( PCTIM3 )
+                    | BV( PCRTC )
+                    | BV( PCGPIO )
+                    | BV( PCPWM1 )
+                    //                 | BV(PCUSB)
+                    ;
 }

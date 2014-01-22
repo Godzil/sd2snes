@@ -75,128 +75,179 @@
 }
 */
 //static char txbuf[1 << CONFIG_UART_TX_BUF_SHIFT];
-static volatile unsigned int read_idx,write_idx;
+static volatile unsigned int read_idx, write_idx;
 
-void uart_putc(char c) {
-  if (c == '\n')
-    uart_putc('\r');
-  while(!(UART_REGS->LSR & (0x20)));
-  UART_REGS->THR = c;
+void uart_putc( char c )
+{
+    if ( c == '\n' )
+    {
+        uart_putc( '\r' );
+    }
+
+    while ( !( UART_REGS->LSR & ( 0x20 ) ) );
+
+    UART_REGS->THR = c;
 }
 
 /* Polling version only */
-unsigned char uart_getc(void) {
-  /* wait for character */
-  while (!(BITBAND(UART_REGS->LSR, 0))) ;
-  return UART_REGS->RBR;
+unsigned char uart_getc( void )
+{
+    /* wait for character */
+    while ( !( BITBANG( UART_REGS->LSR, 0 ) ) ) ;
+
+    return UART_REGS->RBR;
 }
 
 /* Returns true if a char is ready */
-unsigned char uart_gotc(void) {
-  return BITBAND(UART_REGS->LSR, 0);
+unsigned char uart_gotc( void )
+{
+    return BITBANG( UART_REGS->LSR, 0 );
 }
 
-void uart_init(void) {
-  uint32_t div;
+void uart_init( void )
+{
+    uint32_t div;
 
-  /* Turn on power to UART */
-  BITBAND(LPC_SC->PCONP, UART_PCONBIT) = 1;
+    /* Turn on power to UART */
+    BITBANG( LPC_SC->PCONP, UART_PCONBIT ) = 1;
 
-  /* UART clock = CPU clock - this block is reduced at compile-time */
-  if (CONFIG_UART_PCLKDIV == 1) {
-    BITBAND(LPC_SC->UART_PCLKREG, UART_PCLKBIT  ) = 1;
-    BITBAND(LPC_SC->UART_PCLKREG, UART_PCLKBIT+1) = 0;
-  } else if (CONFIG_UART_PCLKDIV == 2) {
-    BITBAND(LPC_SC->UART_PCLKREG, UART_PCLKBIT  ) = 0;
-    BITBAND(LPC_SC->UART_PCLKREG, UART_PCLKBIT+1) = 1;
-  } else if (CONFIG_UART_PCLKDIV == 4) {
-    BITBAND(LPC_SC->UART_PCLKREG, UART_PCLKBIT  ) = 0;
-    BITBAND(LPC_SC->UART_PCLKREG, UART_PCLKBIT+1) = 0;
-  } else { // Fallback: Divide by 8
-    BITBAND(LPC_SC->UART_PCLKREG, UART_PCLKBIT  ) = 1;
-    BITBAND(LPC_SC->UART_PCLKREG, UART_PCLKBIT+1) = 1;
-  }
+    /* UART clock = CPU clock - this block is reduced at compile-time */
+    if ( CONFIG_UART_PCLKDIV == 1 )
+    {
+        BITBANG( LPC_SC->UART_PCLKREG, UART_PCLKBIT  ) = 1;
+        BITBANG( LPC_SC->UART_PCLKREG, UART_PCLKBIT + 1 ) = 0;
+    }
+    else if ( CONFIG_UART_PCLKDIV == 2 )
+    {
+        BITBANG( LPC_SC->UART_PCLKREG, UART_PCLKBIT  ) = 0;
+        BITBANG( LPC_SC->UART_PCLKREG, UART_PCLKBIT + 1 ) = 1;
+    }
+    else if ( CONFIG_UART_PCLKDIV == 4 )
+    {
+        BITBANG( LPC_SC->UART_PCLKREG, UART_PCLKBIT  ) = 0;
+        BITBANG( LPC_SC->UART_PCLKREG, UART_PCLKBIT + 1 ) = 0;
+    }
+    else     // Fallback: Divide by 8
+    {
+        BITBANG( LPC_SC->UART_PCLKREG, UART_PCLKBIT  ) = 1;
+        BITBANG( LPC_SC->UART_PCLKREG, UART_PCLKBIT + 1 ) = 1;
+    }
 
-  /* set baud rate - no fractional stuff for now */
-  UART_REGS->LCR = BV(7) | 3; // always 8n1
-  div = 0xF80022; //0x850004; // baud2divisor(CONFIG_UART_BAUDRATE);
+    /* set baud rate - no fractional stuff for now */
+    UART_REGS->LCR = BV( 7 ) | 3; // always 8n1
+    div = 0xF80022; //0x850004; // baud2divisor(CONFIG_UART_BAUDRATE);
 
-  UART_REGS->DLL = div & 0xff;
-  UART_REGS->DLM = (div >> 8) & 0xff;
-  BITBAND(UART_REGS->LCR, 7) = 0;
+    UART_REGS->DLL = div & 0xff;
+    UART_REGS->DLM = ( div >> 8 ) & 0xff;
+    BITBANG( UART_REGS->LCR, 7 ) = 0;
 
-  if (div & 0xff0000) {
-    UART_REGS->FDR = (div >> 16) & 0xff;
-  }
+    if ( div & 0xff0000 )
+    {
+        UART_REGS->FDR = ( div >> 16 ) & 0xff;
+    }
 
-  /* reset and enable FIFO */
-  UART_REGS->FCR = BV(0);
+    /* reset and enable FIFO */
+    UART_REGS->FCR = BV( 0 );
 
-  UART_REGS->THR = '?';
+    UART_REGS->THR = '?';
 }
 
 /* --- generic code below --- */
-void uart_puthex(uint8_t num) {
-  uint8_t tmp;
-  tmp = (num & 0xf0) >> 4;
-  if (tmp < 10)
-    uart_putc('0'+tmp);
-  else
-    uart_putc('a'+tmp-10);
+void uart_puthex( uint8_t num )
+{
+    uint8_t tmp;
+    tmp = ( num & 0xf0 ) >> 4;
 
-  tmp = num & 0x0f;
-  if (tmp < 10)
-    uart_putc('0'+tmp);
-  else
-    uart_putc('a'+tmp-10);
-}
-
-void uart_trace(void *ptr, uint16_t start, uint16_t len) {
-  uint16_t i;
-  uint8_t j;
-  uint8_t ch;
-  uint8_t *data = ptr;
-
-  data+=start;
-  for(i=0;i<len;i+=16) {
-
-    uart_puthex(start>>8);
-    uart_puthex(start&0xff);
-    uart_putc('|');
-    uart_putc(' ');
-    for(j=0;j<16;j++) {
-      if(i+j<len) {
-        ch=*(data + j);
-        uart_puthex(ch);
-      } else {
-        uart_putc(' ');
-        uart_putc(' ');
-      }
-      uart_putc(' ');
+    if ( tmp < 10 )
+    {
+        uart_putc( '0' + tmp );
     }
-    uart_putc('|');
-    for(j=0;j<16;j++) {
-      if(i+j<len) {
-        ch=*(data++);
-        if(ch<32 || ch>0x7e)
-          ch='.';
-        uart_putc(ch);
-      } else {
-        uart_putc(' ');
-      }
+    else
+    {
+        uart_putc( 'a' + tmp - 10 );
     }
-    uart_putc('|');
-    uart_putcrlf();
-    start+=16;
-  }
+
+    tmp = num & 0x0f;
+
+    if ( tmp < 10 )
+    {
+        uart_putc( '0' + tmp );
+    }
+    else
+    {
+        uart_putc( 'a' + tmp - 10 );
+    }
 }
 
-void uart_flush(void) {
-  while (read_idx != write_idx) ;
+void uart_trace( void *ptr, uint16_t start, uint16_t len )
+{
+    uint16_t i;
+    uint8_t j;
+    uint8_t ch;
+    uint8_t *data = ptr;
+
+    data += start;
+
+    for ( i = 0; i < len; i += 16 )
+    {
+
+        uart_puthex( start >> 8 );
+        uart_puthex( start & 0xff );
+        uart_putc( '|' );
+        uart_putc( ' ' );
+
+        for ( j = 0; j < 16; j++ )
+        {
+            if ( i + j < len )
+            {
+                ch = *( data + j );
+                uart_puthex( ch );
+            }
+            else
+            {
+                uart_putc( ' ' );
+                uart_putc( ' ' );
+            }
+
+            uart_putc( ' ' );
+        }
+
+        uart_putc( '|' );
+
+        for ( j = 0; j < 16; j++ )
+        {
+            if ( i + j < len )
+            {
+                ch = *( data++ );
+
+                if ( ch < 32 || ch > 0x7e )
+                {
+                    ch = '.';
+                }
+
+                uart_putc( ch );
+            }
+            else
+            {
+                uart_putc( ' ' );
+            }
+        }
+
+        uart_putc( '|' );
+        uart_putcrlf();
+        start += 16;
+    }
 }
 
-void uart_puts(const char *text) {
-  while (*text) {
-    uart_putc(*text++);
-  }
+void uart_flush( void )
+{
+    while ( read_idx != write_idx ) ;
+}
+
+void uart_puts( const char *text )
+{
+    while ( *text )
+    {
+        uart_putc( *text++ );
+    }
 }

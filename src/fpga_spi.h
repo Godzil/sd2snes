@@ -32,13 +32,13 @@
 #include "spi.h"
 #include "config.h"
 
-#define FPGA_SS_BIT	16
-#define FPGA_SS_REG	LPC_GPIO0
+#define FPGA_SS_BIT 16
+#define FPGA_SS_REG LPC_GPIO0
 
-#define FPGA_SELECT()	do {FPGA_TX_SYNC(); BITBAND(FPGA_SS_REG->FIOCLR, FPGA_SS_BIT) = 1;} while (0)
-#define FPGA_SELECT_ASYNC()	do {BITBAND(FPGA_SS_REG->FIOCLR, FPGA_SS_BIT) = 1;} while (0)
-#define FPGA_DESELECT()	do {FPGA_TX_SYNC(); BITBAND(FPGA_SS_REG->FIOSET, FPGA_SS_BIT) = 1;} while (0)
-#define FPGA_DESELECT_ASYNC()	do {BITBAND(FPGA_SS_REG->FIOSET, FPGA_SS_BIT) = 1;} while (0)
+#define FPGA_SELECT()   do {FPGA_TX_SYNC(); BITBAND(FPGA_SS_REG->FIOCLR, FPGA_SS_BIT) = 1;} while (0)
+#define FPGA_SELECT_ASYNC() do {BITBAND(FPGA_SS_REG->FIOCLR, FPGA_SS_BIT) = 1;} while (0)
+#define FPGA_DESELECT() do {FPGA_TX_SYNC(); BITBAND(FPGA_SS_REG->FIOSET, FPGA_SS_BIT) = 1;} while (0)
+#define FPGA_DESELECT_ASYNC()   do {BITBAND(FPGA_SS_REG->FIOSET, FPGA_SS_BIT) = 1;} while (0)
 
 #define FPGA_TX_SYNC()     spi_tx_sync()
 #define FPGA_TX_BYTE(x)    spi_tx_byte(x)
@@ -95,35 +95,35 @@
 #define FPGA_CMD_GETSYSCLK      (0xfe)
 #define FPGA_CMD_ECHO           (0xff)
 
-void fpga_spi_init(void);
-uint8_t fpga_test(void);
-uint16_t fpga_status(void);
-void spi_fpga(void);
-void spi_sd(void);
-void spi_none(void);
-void set_mcu_addr(uint32_t);
-void set_dac_addr(uint16_t);
-void dac_play(void);
-void dac_pause(void);
-void dac_reset(void);
-void msu_reset(uint16_t);
-void set_msu_addr(uint16_t);
-void set_msu_status(uint8_t set, uint8_t reset);
-void set_saveram_mask(uint32_t);
-void set_rom_mask(uint32_t);
-void set_mapper(uint8_t val);
-void fpga_sddma(uint8_t tgt, uint8_t partial);
-void fpga_set_sddma_range(uint16_t start, uint16_t end);
-uint16_t get_msu_track(void);
-uint32_t get_msu_offset(void);
-uint32_t get_snes_sysclk(void);
-void set_bsx_regs(uint8_t set, uint8_t reset);
-void set_fpga_time(uint64_t time);
-void fpga_reset_srtc_state(void);
-void fpga_reset_dspx_addr(void);
-void fpga_write_dspx_pgm(uint32_t data);
-void fpga_write_dspx_dat(uint16_t data);
-void fpga_dspx_reset(uint8_t reset);
-void fpga_set_features(uint8_t feat);
-void fpga_set_213f(uint8_t data);
+void fpga_spi_init( void );
+uint8_t fpga_test( void );
+uint16_t fpga_status( void );
+void spi_fpga( void );
+void spi_sd( void );
+void spi_none( void );
+void set_mcu_addr( uint32_t );
+void set_dac_addr( uint16_t );
+void dac_play( void );
+void dac_pause( void );
+void dac_reset( void );
+void msu_reset( uint16_t );
+void set_msu_addr( uint16_t );
+void set_msu_status( uint8_t set, uint8_t reset );
+void set_saveram_mask( uint32_t );
+void set_rom_mask( uint32_t );
+void set_mapper( uint8_t val );
+void fpga_sddma( uint8_t tgt, uint8_t partial );
+void fpga_set_sddma_range( uint16_t start, uint16_t end );
+uint16_t get_msu_track( void );
+uint32_t get_msu_offset( void );
+uint32_t get_snes_sysclk( void );
+void set_bsx_regs( uint8_t set, uint8_t reset );
+void set_fpga_time( uint64_t time );
+void fpga_reset_srtc_state( void );
+void fpga_reset_dspx_addr( void );
+void fpga_write_dspx_pgm( uint32_t data );
+void fpga_write_dspx_dat( uint16_t data );
+void fpga_dspx_reset( uint8_t reset );
+void fpga_set_features( uint8_t feat );
+void fpga_set_213f( uint8_t data );
 #endif

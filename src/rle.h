@@ -7,9 +7,9 @@
 #define RLE_RUN     (0x5b)
 #define RLE_RUNLONG (0x77)
 
-uint8_t rle_file_getc(void);
-uint8_t rle_mem_getc(void);
-void rle_mem_init(const uint8_t *address, uint32_t len);
+uint8_t rle_file_getc( void );
+uint8_t rle_mem_getc( void );
+void rle_mem_init( const uint8_t *address, uint32_t len );
 const uint8_t *rle_mem_ptr;
 const uint8_t *rle_mem_endptr;
 uint8_t rle_state;

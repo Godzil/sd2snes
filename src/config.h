@@ -11,9 +11,9 @@
 #define IN_AHBRAM                 __attribute__ ((section(".ahbram")))
 
 #define SD_DT_INT_SETUP()         do {\
-                                    BITBAND(LPC_GPIOINT->IO2IntEnR, SD_DT_BIT) = 1;\
-                                    BITBAND(LPC_GPIOINT->IO2IntEnF, SD_DT_BIT) = 1;\
-                                  } while(0)
+        BITBAND(LPC_GPIOINT->IO2IntEnR, SD_DT_BIT) = 1;\
+        BITBAND(LPC_GPIOINT->IO2IntEnF, SD_DT_BIT) = 1;\
+    } while(0)
 
 #define SD_CHANGE_DETECT          (BITBAND(LPC_GPIOINT->IO2IntStatR, SD_DT_BIT)\
                                    |BITBAND(LPC_GPIOINT->IO2IntStatF, SD_DT_BIT))
@@ -33,7 +33,7 @@
 // #define SD_CHANGE_VECT
 // #define CONFIG_SD_DATACRC 1
 
-#define CONFIG_UART_NUM	          3
+#define CONFIG_UART_NUM           3
 // #define CONFIG_CPU_FREQUENCY      90315789
 #define CONFIG_CPU_FREQUENCY      88000000
 //#define CONFIG_CPU_FREQUENCY      46000000
@@ -65,7 +65,7 @@
 
 #define QSORT_MAXELEM             2048
 #define SORT_STRLEN               256
-#define CLTBL_SIZE		  100
+#define CLTBL_SIZE        100
 
 #define DIR_FILE_MAX              16380
 

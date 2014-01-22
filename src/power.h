@@ -5,7 +5,7 @@
 
 #include "bits.h"
 
-#define PCUART0	(3)
+#define PCUART0 (3)
 #define PCUART1 (4)
 #define PCUART2 (24)
 #define PCUART3 (25)
@@ -38,6 +38,6 @@
 #define PCQEI   (18)
 #define PCGPIO  (15)
 
-void power_init(void);
+void power_init( void );
 
 #endif

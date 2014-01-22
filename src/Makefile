@@ -55,7 +55,7 @@ TARGET = $(OBJDIR)/sd2snes
 
 
 # List C source files here. (C dependencies are automatically generated.)
-SRC = main.c ff.c ccsbcs.c clock.c uart.c power.c led.c timer.c printf.c spi.c fileops.c rtc.c fpga.c fpga_spi.c snes.c smc.c memory.c filetypes.c faulthandler.c sort.c crc32.c cic.c cli.c xmodem.c irq.c rle.c sdnative.c msu1.c crc16.c sysinfo.c cfg.c
+SRC = main.c ff.c ccsbcs.c clock.c uart.c power.c led.c timer.c printf.c spi.c fileops.c rtc.c fpga.c fpga_spi.c snes.c smc.c memory.c filetypes.c faulthandler.c sort.c crc32.c cic.c cli.c xmodem.c irq.c rle.c sdnative.c msu1.c crc16.c sysinfo.c cfg.c tests.c
 
 # usbcontrol.c usb_hid.c usbhw_lpc.c usbinit.c usbstdreq.c
 
@@ -198,7 +198,7 @@ ALL_ASFLAGS = -I. -x assembler-with-cpp $(ASFLAGS) $(CDEFS)
 # Default target.
 all: build
 
-build: cfgware.h elf bin hex
+build: snesboot.h cfgware.h elf bin hex
 	$(E) "  SIZE   $(TARGET).elf"
 	$(Q)$(ELFSIZE)|grep -v debug
 	cp $(TARGET).bin $(OBJDIR)/firmware.img
@@ -218,13 +218,13 @@ sym: $(TARGET).sym
 
 program: build
 	utils/lpcchksum $(TARGET).bin
-	openocd -f openocd-usb.cfg -f lpc1754.cfg -f flash.cfg
+	openocd -f interface/olimex-arm-usb-ocd.cfg  -f lpc1754.cfg -f flash.cfg
 
 debug: build
-	openocd -f openocd-usb.cfg -f lpc1754.cfg
+	openocd -f interface/olimex-arm-usb-ocd.cfg  -f lpc1754.cfg
 
 reset:
-	openocd -f openocd-usb.cfg -f lpc1754.cfg -f reset.cfg
+	openocd -f interface/olimex-arm-usb-ocd.cfg  -f lpc1754.cfg -f reset.cfg
 
 # Display size of file.
 HEXSIZE = $(SIZE) --target=$(FORMAT) $(TARGET).hex
@@ -234,11 +234,21 @@ ELFSIZE = $(SIZE) -A $(TARGET).elf
 # Generate cfgware.h
 cfgware.h: $(OBJDIR)/fpga_rle.bit
 	$(E) "  BIN2H  $@"
-	$(Q) $(BIN2H) $< $@
+	$(Q) $(BIN2H) $< $@ cfgware
 
-$(OBJDIR)/fpga_rle.bit: sd2sneslite.bit
+$(OBJDIR)/fpga_rle.bit: ../verilog/sd2sneslite/main.bit
 	$(E) "  RLE    $@"
 	$(Q) $(RLE) $< $@
+
+#generate snesboot.h
+snesboot.h: $(OBJDIR)/snesboot.rle
+		$(E) "  BIN2H  $@"
+		$(Q) $(BIN2H) $< $@ bootrle
+
+$(OBJDIR)/snesboot.rle: ../snes/boot/menu.bin
+		$(E) "  RLE    $@"
+		$(Q) $(RLE) $< $@
+
 
 # Generate autoconf.h from config
 .PRECIOUS : $(OBJDIR)/autoconf.h

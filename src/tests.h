@@ -7,5 +7,6 @@ void test_sdbench_local(char *filename);
 void test_rom_rw(void);
 void test_fpga_echo(void);
 
+int test_mem(void);
 
 #endif

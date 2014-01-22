@@ -37,7 +37,7 @@ extern "C" {
  * \param data_len Number of bytes in the \a data buffer.
  * \return         The updated crc value.
  *****************************************************************************/
-uint16_t crc16_update(uint16_t crc, const unsigned char data);
+uint16_t crc16_update( uint16_t crc, const unsigned char data );
 
 #ifdef __cplusplus
 }           /* closing brace for extern "C" */

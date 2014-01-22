@@ -99,11 +99,11 @@ led_pwm();
                           NO_RUN, NO_RUN, NO_RUN, NO_RUN, NO_RUN,
                           NO_RUN };
 
-  testresults[TEST_SD] = test_sd();
+   testresults[TEST_SD] = test_sd();
 //testresults[TEST_USB] = test_usb();
-  testresults[TEST_RTC] = test_rtc();
+  //testresults[TEST_RTC] = test_rtc();
   delay_ms(209);
-  testresults[TEST_CIC] = test_cic();
+//  testresults[TEST_CIC] = test_cic();
   testresults[TEST_FPGA] = test_fpga();
   testresults[TEST_RAM] = test_mem();
   printf("Loading SNES test ROM\n=====================\n");

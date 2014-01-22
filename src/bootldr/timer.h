@@ -13,8 +13,9 @@ extern volatile tick_t ticks;
  *
  * This inline function returns the current system tick count.
  */
-static inline tick_t getticks(void) {
-  return ticks;
+static inline tick_t getticks( void )
+{
+    return ticks;
 }
 
 #define MS_TO_TICKS(x) (x/10)
@@ -35,17 +36,17 @@ static inline tick_t getticks(void) {
  * (">=0" refers to the time_after_eq macro which wasn't copied)
  */
 #define time_after(a,b)         \
-         ((int)(b) - (int)(a) < 0)
+    ((int)(b) - (int)(a) < 0)
 #define time_before(a,b)        time_after(b,a)
 
 
-void timer_init(void);
+void timer_init( void );
 
 /* delay for "time" microseconds - uses the RIT */
-void delay_us(unsigned int time);
+void delay_us( unsigned int time );
 
 /* delay for "time" milliseconds - uses the RIT */
-void delay_ms(unsigned int time);
-void sleep_ms(unsigned int time);
+void delay_ms( unsigned int time );
+void sleep_ms( unsigned int time );
 
 #endif

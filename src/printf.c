@@ -61,231 +61,296 @@ static char *outptr;
 static int maxlen;
 
 /* printf */
-static void outchar(char x) {
-  if (maxlen) {
-    maxlen--;
-    outfunc(x);
-    outlength++;
-  }
+static void outchar( char x )
+{
+    if ( maxlen )
+    {
+        maxlen--;
+        outfunc( x );
+        outlength++;
+    }
 }
 
 /* sprintf */
-static void outstr(char x) {
-  if (maxlen) {
-    maxlen--;
-    *outptr++ = x;
-    outlength++;
-  }
+static void outstr( char x )
+{
+    if ( maxlen )
+    {
+        maxlen--;
+        *outptr++ = x;
+        outlength++;
+    }
 }
 
-static int internal_nprintf(void (*output_function)(char c), const char *fmt, va_list ap) {
-  unsigned int width;
-  unsigned int flags;
-  unsigned int base = 0;
-  char *ptr = NULL;
+static int internal_nprintf( void ( *output_function )( char c ), const char *fmt, va_list ap )
+{
+    unsigned int width;
+    unsigned int flags;
+    unsigned int base = 0;
+    char *ptr = NULL;
 
-  outlength = 0;
+    outlength = 0;
 
-  while (*fmt) {
-    while (1) {
-      if (*fmt == 0)
-        goto end;
+    while ( *fmt )
+    {
+        while ( 1 )
+        {
+            if ( *fmt == 0 )
+            {
+                goto end;
+            }
 
-      if (*fmt == '%') {
-        fmt++;
-        if (*fmt != '%')
-          break;
-      }
+            if ( *fmt == '%' )
+            {
+                fmt++;
 
-      output_function(*fmt++);
-    }
+                if ( *fmt != '%' )
+                {
+                    break;
+                }
+            }
 
-    flags = 0;
-    width = 0;
-
-    /* read all flags */
-    do {
-      if (flags < FLAG_WIDTH) {
-        switch (*fmt) {
-        case '0':
-          flags |= FLAG_ZEROPAD;
-          continue;
-
-        case '-':
-          flags |= FLAG_LEFTADJ;
-          continue;
-
-        case ' ':
-          flags |= FLAG_BLANK;
-          continue;
-
-        case '+':
-          flags |= FLAG_FORCESIGN;
-          continue;
-        }
-      }
-
-      if (flags < FLAG_LONG) {
-        if (*fmt >= '0' && *fmt <= '9') {
-          unsigned char tmp = *fmt - '0';
-          width = 10*width + tmp;
-          flags |= FLAG_WIDTH;
-          continue;
+            output_function( *fmt++ );
         }
 
-        if (*fmt == 'h')
-          continue;
+        flags = 0;
+        width = 0;
 
-        if (*fmt == 'l') {
-          flags |= FLAG_LONG;
-          continue;
+        /* read all flags */
+        do
+        {
+            if ( flags < FLAG_WIDTH )
+            {
+                switch ( *fmt )
+                {
+                case '0':
+                    flags |= FLAG_ZEROPAD;
+                    continue;
+
+                case '-':
+                    flags |= FLAG_LEFTADJ;
+                    continue;
+
+                case ' ':
+                    flags |= FLAG_BLANK;
+                    continue;
+
+                case '+':
+                    flags |= FLAG_FORCESIGN;
+                    continue;
+                }
+            }
+
+            if ( flags < FLAG_LONG )
+            {
+                if ( *fmt >= '0' && *fmt <= '9' )
+                {
+                    unsigned char tmp = *fmt - '0';
+                    width = 10 * width + tmp;
+                    flags |= FLAG_WIDTH;
+                    continue;
+                }
+
+                if ( *fmt == 'h' )
+                {
+                    continue;
+                }
+
+                if ( *fmt == 'l' )
+                {
+                    flags |= FLAG_LONG;
+                    continue;
+                }
+            }
+
+            break;
         }
-      }
+        while ( *fmt++ );
 
-      break;
-    } while (*fmt++);
+        /* Strings */
+        if ( *fmt == 'c' || *fmt == 's' )
+        {
+            switch ( *fmt )
+            {
+            case 'c':
+                buffer[0] = va_arg( ap, int );
+                ptr = buffer;
+                break;
 
-    /* Strings */
-    if (*fmt == 'c' || *fmt == 's') {
-      switch (*fmt) {
-      case 'c':
-        buffer[0] = va_arg(ap, int);
-        ptr = buffer;
-        break;
+            case 's':
+                ptr = va_arg( ap, char * );
+                break;
+            }
 
-      case 's':
-        ptr = va_arg(ap, char *);
-        break;
-      }
+            goto output;
+        }
 
-      goto output;
-    }
+        /* Numbers */
+        switch ( *fmt )
+        {
+        case 'u':
+            flags |= FLAG_UNSIGNED;
 
-    /* Numbers */
-    switch (*fmt) {
-    case 'u':
-      flags |= FLAG_UNSIGNED;
-    case 'd':
-      base = 10;
-      break;
+        case 'd':
+            base = 10;
+            break;
 
-    case 'o':
-      base = 8;
-      flags |= FLAG_UNSIGNED;
-      break;
+        case 'o':
+            base = 8;
+            flags |= FLAG_UNSIGNED;
+            break;
 
-    case 'p': // pointer
-      output_function('0');
-      output_function('x');
-      width -= 2;
-    case 'x':
-    case 'X':
-      base = 16;
-      flags |= FLAG_UNSIGNED;
-      break;
-    }
+        case 'p': // pointer
+            output_function( '0' );
+            output_function( 'x' );
+            width -= 2;
 
-    unsigned int num;
+        case 'x':
+        case 'X':
+            base = 16;
+            flags |= FLAG_UNSIGNED;
+            break;
+        }
 
-    if (!(flags & FLAG_UNSIGNED)) {
-      int tmp = va_arg(ap, int);
-      if (tmp < 0) {
-        num = -tmp;
-        flags |= FLAG_NEGATIVE;
-      } else
-        num = tmp;
-    } else {
-      num = va_arg(ap, unsigned int);
-    }
+        unsigned int num;
 
-    /* Convert number into buffer */
-    ptr = buffer + sizeof(buffer);
-    *--ptr = 0;
-    do {
-      *--ptr = hexdigits[num % base];
-      num /= base;
-    } while (num != 0);
+        if ( !( flags & FLAG_UNSIGNED ) )
+        {
+            int tmp = va_arg( ap, int );
 
-    /* Sign */
-    if (flags & FLAG_NEGATIVE) {
-      output_function('-');
-      width--;
-    } else if (flags & FLAG_FORCESIGN) {
-      output_function('+');
-      width--;
-    } else if (flags & FLAG_BLANK) {
-      output_function(' ');
-      width--;
-    }
-
-  output:
-    /* left padding */
-    if ((flags & FLAG_WIDTH) && !(flags & FLAG_LEFTADJ)) {
-      while (strlen(ptr) < width) {
-        if (flags & FLAG_ZEROPAD)
-          output_function('0');
+            if ( tmp < 0 )
+            {
+                num = -tmp;
+                flags |= FLAG_NEGATIVE;
+            }
+            else
+            {
+                num = tmp;
+            }
+        }
         else
-          output_function(' ');
-        width--;
-      }
+        {
+            num = va_arg( ap, unsigned int );
+        }
+
+        /* Convert number into buffer */
+        ptr = buffer + sizeof( buffer );
+        *--ptr = 0;
+
+        do
+        {
+            *--ptr = hexdigits[num % base];
+            num /= base;
+        }
+        while ( num != 0 );
+
+        /* Sign */
+        if ( flags & FLAG_NEGATIVE )
+        {
+            output_function( '-' );
+            width--;
+        }
+        else if ( flags & FLAG_FORCESIGN )
+        {
+            output_function( '+' );
+            width--;
+        }
+        else if ( flags & FLAG_BLANK )
+        {
+            output_function( ' ' );
+            width--;
+        }
+
+output:
+
+        /* left padding */
+        if ( ( flags & FLAG_WIDTH ) && !( flags & FLAG_LEFTADJ ) )
+        {
+            while ( strlen( ptr ) < width )
+            {
+                if ( flags & FLAG_ZEROPAD )
+                {
+                    output_function( '0' );
+                }
+                else
+                {
+                    output_function( ' ' );
+                }
+
+                width--;
+            }
+        }
+
+        /* data */
+        while ( *ptr )
+        {
+            output_function( *ptr++ );
+
+            if ( width )
+            {
+                width--;
+            }
+        }
+
+        /* right padding */
+        if ( flags & FLAG_WIDTH )
+        {
+            while ( width )
+            {
+                output_function( ' ' );
+                width--;
+            }
+        }
+
+        fmt++;
     }
 
-    /* data */
-    while (*ptr) {
-      output_function(*ptr++);
-      if (width)
-        width--;
-    }
-
-    /* right padding */
-    if (flags & FLAG_WIDTH) {
-      while (width) {
-        output_function(' ');
-        width--;
-      }
-    }
-
-    fmt++;
-  }
-
- end:
-  return outlength;
+end:
+    return outlength;
 }
 
-int printf(const char *format, ...) {
-  va_list ap;
-  int res;
+int printf( const char *format, ... )
+{
+    va_list ap;
+    int res;
 
-  maxlen = -1;
-  va_start(ap, format);
-  res = internal_nprintf(outchar, format, ap);
-  va_end(ap);
-  return res;
+    maxlen = -1;
+    va_start( ap, format );
+    res = internal_nprintf( outchar, format, ap );
+    va_end( ap );
+    return res;
 }
 
-int snprintf(char *str, size_t size, const char *format, ...) {
-  va_list ap;
-  int res;
+int snprintf( char *str, size_t size, const char *format, ... )
+{
+    va_list ap;
+    int res;
 
-  maxlen = size;
-  outptr = str;
-  va_start(ap, format);
-  res = internal_nprintf(outstr, format, ap);
-  va_end(ap);
-  if (res < size)
-    str[res] = 0;
-  return res;
+    maxlen = size;
+    outptr = str;
+    va_start( ap, format );
+    res = internal_nprintf( outstr, format, ap );
+    va_end( ap );
+
+    if ( res < size )
+    {
+        str[res] = 0;
+    }
+
+    return res;
 }
 
 /* Required for gcc compatibility */
-int puts(const char *str) {
-  uart_puts(str);
-  uart_putc('\n');
-  return 0;
+int puts( const char *str )
+{
+    uart_puts( str );
+    uart_putc( '\n' );
+    return 0;
 }
 
 #undef putchar
-int putchar(int c) {
-  uart_putc(c);
-  return 0;
+int putchar( int c )
+{
+    uart_putc( c );
+    return 0;
 }

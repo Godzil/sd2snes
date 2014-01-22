@@ -4,12 +4,15 @@
 #include "sdnative.h"
 #include "uart.h"
 
-void EINT3_IRQHandler(void) {
-  NVIC_ClearPendingIRQ(EINT3_IRQn);
-  if(SD_CHANGE_DETECT) {
-    SD_CHANGE_CLR();
-    sdn_changed();
-  }
+void EINT3_IRQHandler( void )
+{
+    NVIC_ClearPendingIRQ( EINT3_IRQn );
+
+    if ( SD_CHANGE_DETECT )
+    {
+        SD_CHANGE_CLR();
+        sdn_changed();
+    }
 }
 
 
